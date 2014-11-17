@@ -2,31 +2,31 @@ TEMPLATE_DIR="/data/chamal/projects/raihaan/templates"
 LIBRARY_DIR="/data/chamal/projects/raihaan/BEaST_libraries/ADNI_library"
 
 n3correct = {
-	//Runs the nu_correct (aka n3correct) command with optimal settings according to
-	//http://www.ncbi.nlm.nih.gov/pubmed/19559796
-	//Requires minc-toolkit
-        exec "nu_correct -verbose -clobber -iter 200 -shrink 2 -stop 0.000001 -fwhm 0.15 -distance 30 $input.mnc $output.mnc"
+    //Runs the nu_correct (aka n3correct) command with optimal settings according to
+    //http://www.ncbi.nlm.nih.gov/pubmed/19559796
+    //Requires minc-toolkit
+    exec "nu_correct -verbose -clobber -iter 200 -shrink 2 -stop 0.000001 -fwhm 0.15 -distance 30 $input.mnc $output.mnc"
 }
 
 nlm_denoise = {
-	//Runs non-local-means filter on data
-	//http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=4359947
-	//Requires minc-toolkit
-        exec "volume_denoise.pl $input.mnc $output.mnc --verbose --clobber"
+    //Runs non-local-means filter on data
+    //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=4359947
+    //Requires minc-toolkit
+    exec "volume_denoise.pl $input.mnc $output.mnc --verbose --clobber"
 }
 
 anlm_denoise = {
-	//Runs the "improved" adaptive non local means filter
-	//http://onlinelibrary.wiley.com/doi/10.1002/jmri.22003/full
-	//Requires minc-toolkit
-        exec "minc_anlm --verbose $input.mnc $output.mnc"
+    //Runs the "improved" adaptive non local means filter
+    //http://onlinelibrary.wiley.com/doi/10.1002/jmri.22003/full
+    //Requires minc-toolkit
+    exec "minc_anlm --verbose $input.mnc $output.mnc"
 }
 
 n4correct = {
-	//Runs the improved n3correct aka N4correct
-	//http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
-	//Requires ANTs as it uses ANTs/ITK's implementation, as minc-toolkit's is buggy
-        exec "N4BiasFieldCorrection -d 3 -r -s 2 -b [200] -c [200x200x200x200,0.0] -i $input.mnc -o $output.mnc"
+    //Runs the improved n3correct aka N4correct
+    //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
+    //Requires ANTs as it uses ANTs/ITK's implementation, as minc-toolkit's is buggy
+    exec "N4BiasFieldCorrection -d 3 -r -s 2 -b [200] -c [200x200x200x200,0.0] -i $input.mnc -o $output.mnc"
 }
 
 dumb_normalize = {
@@ -46,7 +46,7 @@ beastnormalize = {
 }
 
 beastmask = {
-    exec "mincbeast -clobber -verbose $LIBRARY_DIR $input.mnc $output.mnc -fill -median -nlm_filter -same_res -conf $LIBRARY_DIR/default.1mm.conf"
+    exec "mincbeast -clobber -verbose $LIBRARY_DIR $input.mnc $output.mnc -fill -median -nlm_filter -same_res -flip -conf $LIBRARY_DIR/default.1mm.conf"
 }
 
 beastresample = {
