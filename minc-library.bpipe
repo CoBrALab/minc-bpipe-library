@@ -26,11 +26,13 @@ n4correct = {
     //Runs the improved n3correct aka N4correct
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
     //Requires ANTs as it uses ANTs/ITK's implementation, as minc-toolkit's is buggy
+    //ANTs must be loaded after minc-toolkit to override the minc-toolkit version
     exec "N4BiasFieldCorrection -d 3 -r -s 2 -b [200] -c [200x200x200x200,0.0] -i $input.mnc -o $output.mnc"
 }
 
 dumb_normalize = {
-	//Performs a dumb normalization of the data, throwing away top and bottom 1% and then scaling 0 to 65535
+	//Performs a dumb normalization of the data, throwing away top and bottom 1%
+	//Data is then scaled 0-65535 and stored in a sensible unsigned int format
 	//Requires minc-toolkit
 	exec """
 	minccalc -2 -clobber -expression "A[0]<(0.01*\$(mincstats -quiet -max $input.mnc)) || A[0]>(0.99*\$(mincstats -quiet -max $input.mnc)) ? 0 : A[0]" $input.mnc $output.tmp
