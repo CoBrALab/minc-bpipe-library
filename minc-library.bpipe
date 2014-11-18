@@ -45,6 +45,24 @@ dumb_normalize = {
 	"""
 }
 
+nuyl_normalize = {
+    //Performs normalization against a model using minc_nuyl
+    //Requires NORMALIZEMODEL to be set to a reference mnc (atlas perhaps?)
+    //See http://www.ncbi.nlm.nih.gov/pubmed/10784285
+}
+
+pol_normalize = {
+    //Performs normalization against a model using volume_pol
+    //Requires NORMALIZEMODEL to be set to a reference mnc (atlas perhaps?)
+    //
+
+}
+
+inormalize = {
+    //Performal normalization against a model using inormalize (normalize_mri)
+}
+
+
 cutneck = {
     //Linearly registers brain to standard template
     //Computes inverse of linear transform
