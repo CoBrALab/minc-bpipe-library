@@ -1,5 +1,8 @@
 TEMPLATE_DIR="/data/chamal/projects/raihaan/templates"
 LIBRARY_DIR="/data/chamal/projects/raihaan/BEaST_libraries/ADNI_library"
+CUTNECKMODELDIR="/home/cic/patrai/cutneck/ICBM_09c"
+CUTNECKMODELNAME="mni_icbm152_t1_tal_nlin_sym_09c"
+
 
 n3correct = {
     //Runs the nu_correct (aka n3correct) command with optimal settings according to
@@ -40,6 +43,31 @@ dumb_normalize = {
 	exec """
 	minccalc -2 -short -unsigned -clobber -expression "A[0]/\$(mincstats -quiet -max $output.tmp)*65535" $output.tmp $output.mnc
 	"""
+}
+
+cutneck = {
+    //Linearly registers brain to standard template
+    //Computes inverse of linear transform
+    //Transforms template's neck mask to subject space
+    //Applies transformed mask to subject
+    //WARNING: longfilenames/paths break history generation
+    //comment out update_history in autocrop to fix
+    //Requires minc-toolkit
+    exec """
+    mincANTS 3 -m CC[$input.mnc,$CUTNECKMODELDIR/${CUTNECKMODELNAME}.mnc,1,4] 
+     -i 0
+     -o $output.xfm
+     --number-of-affine-iterations 10000x10000x10000x10000x10000
+     --continue-affine true
+     --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4
+     --MI-option 32x16000 
+    """
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned -keep_real_range -like $input.mnc -transform $output.xfm -invert_transformation $CUTNECKMODELDIR/${CUTNECKMODELNAME}_headmask.mnc $output.tmp
+    """
+    exec """
+    autocrop -clobber -verbose -short -bbox $output.tmp -isoexpand 5 $input.mnc $output.mnc
+    """
 }
 
 beastnormalize = {
