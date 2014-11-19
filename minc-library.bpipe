@@ -1,5 +1,5 @@
-TEMPLATE_DIR="/data/chamal/projects/raihaan/templates"
-LIBRARY_DIR="/data/chamal/projects/raihaan/BEaST_libraries/ADNI_library"
+BEASTTEMPLATE_DIR="/data/chamal/projects/raihaan/templates"
+BEASTLIBRARY_DIR="/data/chamal/projects/raihaan/BEaST_libraries/ADNI_library"
 CUTNECKMODELDIR="/home/cic/patrai/cutneck/ICBM_09c"
 CUTNECKMODELNAME="mni_icbm152_t1_tal_nlin_sym_09c"
 
@@ -72,11 +72,11 @@ cutneck = {
 
 beastnormalize = {
     branch.origname = "$input"
-    exec "beast_normalize $input.mnc $output.mnc $output.xfm -non3 -modeldir $TEMPLATE_DIR"
+    exec "beast_normalize $input.mnc $output.mnc $output.xfm -non3 -modeldir $BEASTTEMPLATE_DIR"
 }
 
 beastmask = {
-    exec "mincbeast -clobber -verbose $LIBRARY_DIR $input.mnc $output.mnc -fill -median -nlm_filter -same_res -flip -conf $LIBRARY_DIR/default.1mm.conf"
+    exec "mincbeast -clobber -verbose $BEASTLIBRARY_DIR $input.mnc $output.mnc -fill -median -nlm_filter -same_res -flip -conf $BEASTLIBRARY_DIR/default.1mm.conf"
 }
 
 beastresample = {
@@ -91,7 +91,7 @@ beastextract = {
 
 beast = segment {
     //Runs the beast brain extraction toolchain
-    //Requires models defined in $TEMPLATE_DIR and a library in $LIBRARY_DIR
+    //Requires models defined in $BEASTTEMPLATE_DIR and a library in $BEASTLIBRARY_DIR
     //Requires minc-toolkit
     beastnormalize + beastmask + beastresample + beastextract
 }
