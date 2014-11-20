@@ -2,7 +2,7 @@ TEMPLATE_DIR="/data/chamal/projects/raihaan/templates"
 LIBRARY_DIR="/data/chamal/projects/raihaan/BEaST_libraries/ADNI_library"
 CUTNECKMODELDIR="/home/cic/patrai/cutneck/ICBM_09c"
 CUTNECKMODELNAME="mni_icbm152_t1_tal_nlin_sym_09c"
-
+//NORMALIZEMODEL="/path/to/model.mnc"
 
 n3correct = {
     //Runs the nu_correct (aka n3correct) command with optimal settings according to
@@ -46,9 +46,12 @@ dumb_normalize = {
 }
 
 nuyl_normalize = {
-    //Performs normalization against a model using minc_nuyl
+    //Performs histogram landmark normalization to a model using minc_nuyl
     //Requires NORMALIZEMODEL to be set to a reference mnc (atlas perhaps?)
     //See http://www.ncbi.nlm.nih.gov/pubmed/10784285
+    exec """
+    minc_nuyl --verbose --fix_zero_padding $input.mnc ${NORMALIZEMODEL} $output.mnc
+    """
 }
 
 pol_normalize = {
