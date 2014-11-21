@@ -117,8 +117,22 @@ beast = segment {
     beastnormalize + beastmask + beastresample + beastextract
 }
 
+resample = {
+    //Resamples minc volumes to unsigned shorts (16bit)
+    //Many buggy programs generate 32 or 64bit float minc volumes, these files
+    //are much larger, have numerical noise, and take longer to process
+    //This step should be run last
+    //NOTE: if using normalization to a model for registration the model
+    //should also be resampled
+    //Requires minc-tookit
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned $input.mnc $output.mnc
+    """
+}
+
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
+	//is denoise + n3 or n4 + normalize + beast or cutneck + resample
 	anlm_denoise + n4correct
 }
 
