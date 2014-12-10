@@ -2,6 +2,7 @@ BEASTTEMPLATE_DIR="/data/chamal/projects/raihaan/templates"
 BEASTLIBRARY_DIR="/data/chamal/projects/raihaan/BEaST_libraries/ADNI_library"
 CUTNECKMODELDIR="/home/cic/patrai/cutneck/ICBM_09c"
 CUTNECKMODELNAME="mni_icbm152_t1_tal_nlin_sym_09c"
+MNIMODEL="/home/cic/patrai/cutneck/ICBM_09c/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
 //NORMALIZEMODEL="/path/to/model.mnc"
 
 n3correct = {
@@ -88,6 +89,24 @@ cutneck = {
     """
     exec """
     autocrop -clobber -verbose -short -bbox $output.tmp -isoexpand 5 $input.mnc $output.mnc
+    """
+}
+
+MNI_register = {
+    //Linearly registers brain to MNI space
+    //Transforms brain to MNI space
+    //Requires minc-toolkit
+    exec """
+    mincANTS 3 -m MI[$input.mnc,${MNIMODEL},1,32] 
+     -i 0
+     -o $output.xfm
+     --number-of-affine-iterations 10000x10000x10000x10000x10000
+     --continue-affine true
+     --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4
+     --MI-option 32x32000 
+    """
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned -keep_real_range -like ${MNIMODEL} -transform $output.xfm $input.mnc $output.mnc
     """
 }
 
