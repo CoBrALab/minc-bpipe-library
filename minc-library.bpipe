@@ -25,7 +25,7 @@ n3correct = {
     //Runs the nu_correct (aka n3correct) command with optimal settings according to
     //http://www.ncbi.nlm.nih.gov/pubmed/19559796
     //Requires minc-toolkit
-    exec "nu_correct -verbose -clobber -iter 200 -shrink 2 -stop 0.000001 -fwhm 0.15 -distance 30 $input.mnc $output.mnc"
+    exec "nu_correct -verbose -clobber -iter 200 -shrink 2 -stop 0.000001 -fwhm 0.05 -distance 30 $input.mnc $output.mnc"
 }
 
 nlm_denoise = {
