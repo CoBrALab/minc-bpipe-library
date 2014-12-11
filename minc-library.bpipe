@@ -111,21 +111,22 @@ MNI_register = {
 }
 
 beastnormalize = {
+    //Linearly scales the intensities to the range [0;100] using 0.1%–99.9%
+    //of the voxels in the intensity histogram
+    //No registration or n3 since this is done in prior steps
     branch.origname = "$input"
-    exec "beast_normalize $input.mnc $output.mnc $output.xfm -non3 -modeldir $BEASTTEMPLATE_DIR"
+    exec "beast_normalize $input.mnc $output.mnc $output.xfm -non3 -noreg -modeldir $BEASTTEMPLATE_DIR"
 }
 
 beastmask = {
-    exec "mincbeast -clobber -verbose $BEASTLIBRARY_DIR $input.mnc $output.mnc -fill -median -nlm_filter -same_res -flip -conf $BEASTLIBRARY_DIR/default.1mm.conf"
-}
-
-beastresample = {
-    from("xfm", "mnc") {
-        exec "mincresample -invert_transformation -like $origname -transformation $input.xfm $input.mnc $output.mnc"
+    //The core mincbeast algorithm, generates a mask from patches
+    uses(GB:4) { 
+    exec "mincbeast -clobber -verbose $BEASTLIBRARY_DIR $input.mnc $output.mnc -fill -median -nlm_filter -same_res -conf $BEASTLIBRARY_DIR/default.1mm.conf"
     }
 }
 
 beastextract = {
+    //Applies the mask from beastmask to the original input file to extract the brain
     exec "minccalc -expression A[0]*A[1] $origname $input.mnc $output.mnc"
 }
 
@@ -133,7 +134,9 @@ beast = segment {
     //Runs the beast brain extraction toolchain
     //Requires models defined in $BEASTTEMPLATE_DIR and a library in $BEASTLIBRARY_DIR
     //Requires minc-toolkit
-    beastnormalize + beastmask + beastresample + beastextract
+    //Now registers the brain to MNI space first using mincANTS
+    //http://www.ncbi.nlm.nih.gov/pubmed/21945694
+    MNI_register + beastnormalize + beastmask + beastextract
 }
 
 resample = {
