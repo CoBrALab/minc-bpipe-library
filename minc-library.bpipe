@@ -155,6 +155,18 @@ beast = segment {
     MNI_register + beastnormalize + beastmask + beastextract
 }
 
+defaceapply = {
+    //Applies the inverse face mask to the MRI volume
+    //Expects the brain to be in MNI space
+    exec "minccalc -expression A[0]*(1 - A[1]) $input.mnc ${DEFACEMODEL}_face_mask_res.mnc $output.mnc"
+}
+
+deface = segment {
+    //Linear registers brain to MNI space
+    //Applies inverse facemask to MRI data
+    MNI_register + defaceapply
+}
+
 resample = {
     //Resamples minc volumes to unsigned shorts (16bit)
     //Many buggy programs generate 32 or 64bit float minc volumes, these files
