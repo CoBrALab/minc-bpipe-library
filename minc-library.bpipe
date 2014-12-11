@@ -1,8 +1,24 @@
-BEASTTEMPLATE_DIR="/data/chamal/projects/raihaan/templates"
+BEASTMODEL_DIR="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2"
+BEASTMODEL_NAME="mni_icbm152_t1_tal_nlin_sym_09c"
 BEASTLIBRARY_DIR="/data/chamal/projects/raihaan/BEaST_libraries/ADNI_library"
-CUTNECKMODELDIR="/home/cic/patrai/cutneck/ICBM_09c"
-CUTNECKMODELNAME="mni_icbm152_t1_tal_nlin_sym_09c"
-MNIMODEL="/home/cic/patrai/cutneck/ICBM_09c/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
+
+//Model which has a headmask, must correspond to the same space as MNIMODEL
+CUTNECKMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
+
+//Model which has a facemask, must correspond to the same space as MNIMODEL
+DEFACEMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
+
+//Specify target linear registration model here options are
+//sym or asym
+//t1, t2 or PD
+//Models older than icbm_2009c are also available, see resources directory
+//Choice of model affects MNI_register, cutneck, and deface
+MNIMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
+//MNIMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t1_tal_nlin_asym_09c.mnc"
+//MNIMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
+//MNIMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
+
+//Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
 
 n3correct = {
@@ -76,7 +92,7 @@ cutneck = {
     //comment out update_history in autocrop to fix
     //Requires minc-toolkit
     exec """
-    mincANTS 3 -m CC[$input.mnc,$CUTNECKMODELDIR/${CUTNECKMODELNAME}.mnc,1,4] 
+    mincANTS 3 -m CC[$input.mnc,${MNIMODEL},1,4] 
      -i 0
      -o $output.xfm
      --number-of-affine-iterations 10000x10000x10000x10000x10000
@@ -85,7 +101,7 @@ cutneck = {
      --MI-option 32x16000 
     """
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -keep_real_range -like $input.mnc -transform $output.xfm -invert_transformation $CUTNECKMODELDIR/${CUTNECKMODELNAME}_headmask.mnc $output.tmp
+    mincresample -verbose -clobber -2 -short -unsigned -keep_real_range -like $input.mnc -transform $output.xfm -invert_transformation ${CUTNECKMODEL}_headmask.mnc $output.tmp
     """
     exec """
     autocrop -clobber -verbose -short -bbox $output.tmp -isoexpand 5 $input.mnc $output.mnc
@@ -115,13 +131,13 @@ beastnormalize = {
     //of the voxels in the intensity histogram
     //No registration or n3 since this is done in prior steps
     branch.origname = "$input"
-    exec "beast_normalize $input.mnc $output.mnc $output.xfm -non3 -noreg -modeldir $BEASTTEMPLATE_DIR"
+    exec "beast_normalize $input.mnc $output.mnc $output.xfm -non3 -noreg -modeldir ${BEASTMODEL_DIR} -modelname ${BEASTMODEL_NAME}"
 }
 
 beastmask = {
     //The core mincbeast algorithm, generates a mask from patches
     uses(GB:4) { 
-    exec "mincbeast -clobber -verbose $BEASTLIBRARY_DIR $input.mnc $output.mnc -fill -median -nlm_filter -same_res -conf $BEASTLIBRARY_DIR/default.1mm.conf"
+    exec "mincbeast -clobber -verbose ${BEASTLIBRARY_DIR} $input.mnc $output.mnc -fill -median -nlm_filter -same_res -conf ${BEASTLIBRARY_DIR}/default.1mm.conf"
     }
 }
 
@@ -132,7 +148,7 @@ beastextract = {
 
 beast = segment {
     //Runs the beast brain extraction toolchain
-    //Requires models defined in $BEASTTEMPLATE_DIR and a library in $BEASTLIBRARY_DIR
+    //Requires models defined in $BEASTMODEL_DIR, $BEASTMODEL_NAME and a library in $BEASTLIBRARY_DIR
     //Requires minc-toolkit
     //Now registers the brain to MNI space first using mincANTS
     //http://www.ncbi.nlm.nih.gov/pubmed/21945694
