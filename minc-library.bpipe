@@ -92,6 +92,7 @@ cutneck = {
     //comment out update_history in autocrop to fix
     //Requires minc-toolkit
     exec """
+    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
     mincANTS 3 -m MI[$input.mnc,${MNIMODEL},1,32] 
      -i 0
      -o $output.xfm
@@ -113,6 +114,7 @@ MNI_register = {
     //Transforms brain to MNI space
     //Requires minc-toolkit
     exec """
+    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
     mincANTS 3 -m MI[$input.mnc,${MNIMODEL},1,32] 
      -i 0
      -o $output.xfm
@@ -130,14 +132,14 @@ beastnormalize = {
     //Linearly scales the intensities to the range [0;100] using 0.1%–99.9%
     //of the voxels in the intensity histogram
     //No registration or n3 since this is done in prior steps
-    branch.origname = "$input"
+    branch.origname = "$input.mnc"
     exec "beast_normalize $input.mnc $output.mnc $output.xfm -non3 -noreg -modeldir ${BEASTMODEL_DIR} -modelname ${BEASTMODEL_NAME}"
 }
 
 beastmask = {
     //The core mincbeast algorithm, generates a mask from patches
     uses(GB:4) { 
-    exec "mincbeast -clobber -verbose ${BEASTLIBRARY_DIR} $input.mnc $output.mnc -fill -median -nlm_filter -same_res -conf ${BEASTLIBRARY_DIR}/default.1mm.conf"
+    exec "mincbeast -clobber -verbose ${BEASTLIBRARY_DIR} $input.mnc $output.mnc -fill -median -same_res -conf ${BEASTLIBRARY_DIR}/default.2mm.conf"
     }
 }
 
