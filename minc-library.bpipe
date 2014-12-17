@@ -1,6 +1,6 @@
 BEASTMODEL_DIR="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2"
 BEASTMODEL_NAME="mni_icbm152_t1_tal_nlin_sym_09c"
-BEASTLIBRARY_DIR="/data/chamal/projects/raihaan/BEaST_libraries/ADNI_library"
+BEASTLIBRARY_DIR="/opt/quarantine/resources/BEaST_libraries/combined"
 
 //Model which has a headmask, must correspond to the same space as MNIMODEL
 CUTNECKMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
