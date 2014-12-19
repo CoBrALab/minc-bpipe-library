@@ -124,7 +124,7 @@ MNI_register = {
      --MI-option 32x32000 
     """
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -keep_real_range -like ${MNIMODEL} -transform $output.xfm $input.mnc $output.mnc
+    mincresample -verbose -clobber -2 -short -unsigned -like ${MNIMODEL} -transform $output.xfm $input.mnc $output.mnc
     """
 }
 
