@@ -138,10 +138,11 @@ beastnormalize = {
 
 beastmask = {
     //The core mincbeast algorithm, generates a mask from patches
-    uses(GB:4) { 
-    exec "mincbeast -clobber -verbose ${BEASTLIBRARY_DIR} $input.mnc $output.mnc -fill -median -same_res -conf ${BEASTLIBRARY_DIR}/default.2mm.conf"
+    uses(GB:9) {
+    exec "mincbeast -clobber -verbose -fill -median -same_res -flip -conf ${BEASTLIBRARY_DIR}/default.1mm.conf ${BEASTLIBRARY_DIR} $input.mnc $output.mnc"
     }
 }
+
 
 beastextract = {
     //Applies the mask from beastmask to the original input file to extract the brain
