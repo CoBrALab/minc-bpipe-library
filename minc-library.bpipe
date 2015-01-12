@@ -145,7 +145,7 @@ beastmask = {
 
 beastextract = {
     //Applies the mask from beastmask to the original input file to extract the brain
-    exec "minccalc -expression A[0]*A[1] $origname $input.mnc $output.mnc"
+    exec "minccalc -clobber -expression A[0]*A[1] $origname $input.mnc $output.mnc"
 }
 
 beast = segment {
