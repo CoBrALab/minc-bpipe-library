@@ -100,10 +100,9 @@ MNI_register = {
      -i 0
      -o $output.xfm
      --number-of-affine-iterations 10000x10000x10000x10000x10000
-     --continue-affine true
-     --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4
      --MI-option 32x32000
      --use-Histogram-Matching
+     --rigid-affine true
     """
     exec """
     mincresample -verbose -clobber -2 -short -unsigned -like ${MNIMODEL} -transform $output.xfm $input.mnc $output.mnc
