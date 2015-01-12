@@ -83,31 +83,12 @@ inormalize = {
 }
 
 
-cutneck = {
-    //Linearly registers brain to standard template
-    //Computes inverse of linear transform
-    //Transforms template's neck mask to subject space
-    //Applies transformed mask to subject
-    //WARNING: longfilenames/paths break history generation
-    //comment out update_history in autocrop to fix
-    //Requires minc-toolkit
+cutneckapply = {
     exec """
-    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
-    mincANTS 3 -m MI[$input.mnc,${MNIMODEL},1,32] 
-     -i 0
-     -o $output.xfm
-     --number-of-affine-iterations 10000x10000x10000x10000x10000
-     --continue-affine true
-     --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4
-     --MI-option 32x32000 
-    """
-    exec """
-    mincresample -verbose -clobber -2 -short -unsigned -keep_real_range -like $input.mnc -transform $output.xfm -invert_transformation ${CUTNECKMODEL}_headmask.mnc $output.tmp
-    """
-    exec """
-    autocrop -clobber -verbose -short -bbox $output.tmp -isoexpand 5 $input.mnc $output.mnc
+    minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${CUTNECKMODEL}_headmask.mnc $input.mnc $output.mnc
     """
 }
+
 
 MNI_register = {
     //Linearly registers brain to MNI space
@@ -168,6 +149,12 @@ deface = segment {
     //Linear registers brain to MNI space
     //Applies inverse facemask to MRI data
     MNI_register + defaceapply
+}
+
+cutneck = segment {
+    //Linearly registers brain to MNI space
+    //Applies neckmask to MRI data
+    MNI_register + cutneckapply
 }
 
 resample = {
