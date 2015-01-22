@@ -113,7 +113,7 @@ rigid_register = {
      --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4
     """
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -like ${RIGIDMODEL} -transform $output.xfm $input.mnc $output.mnc
+    mincresample -verbose -clobber -2 -short -unsigned -sinc -like ${RIGIDMODEL} -transform $output.xfm $input.mnc $output.mnc
     """
 }
 
@@ -131,7 +131,7 @@ affine_register = {
      --use-Histogram-Matching
     """
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -like ${AFFINEMODEL} -transform $output.xfm $input.mnc $output.mnc
+    mincresample -verbose -clobber -2 -short -unsigned -sinc -like ${AFFINEMODEL} -transform $output.xfm $input.mnc $output.mnc
     """
 }
 
@@ -152,7 +152,7 @@ affine_register_masked = {
      --use-Histogram-Matching
     """
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -like ${AFFINEMODEL} -transform ${output.xfm.prefix}_inverse.xfm $input.mnc $output.mnc
+    mincresample -verbose -clobber -2 -short -unsigned -sinc -like ${AFFINEMODEL} -transform ${output.xfm.prefix}_inverse.xfm $input.mnc $output.mnc
     """
 }
 
