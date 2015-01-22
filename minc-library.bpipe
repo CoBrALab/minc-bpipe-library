@@ -10,13 +10,20 @@ DEFACEMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm15
 
 //Specify target linear registration model here options are
 //sym or asym
-//t1, t2 or PD
+//t1, t2, or pd
 //Models older than icbm_2009c are also available, see resources directory
 //Choice of model affects MNI_register, cutneck, and deface
-MNIMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
-//MNIMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t1_tal_nlin_asym_09c.mnc"
-//MNIMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
-//MNIMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
+RIGIDMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
+//RIGIDMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t1_tal_nlin_asym_09c.mnc"
+//RIGIDMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
+//RIGIDMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
+AFFINEMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
+//AFFINEMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t1_tal_nlin_asym_09c.mnc"
+//AFFINEMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
+//AFFINEMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
+
+//Mask for masked registration
+REGISTRATIONMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
 
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
@@ -89,23 +96,63 @@ cutneckapply = {
     """
 }
 
-
-MNI_register = {
-    //Linearly registers brain to MNI space
-    //Transforms brain to MNI space
+rigid_register = {
+    //Rigidly registers brain to a given model
+    //Transforms brain into model space
     //Requires minc-toolkit
+    branch.nativemnc = "$input.mnc"
     exec """
     ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
-    mincANTS 3 -m MI[$input.mnc,${MNIMODEL},1,32] 
+    mincANTS 3 -m MI[$input.mnc,${RIGIDMODEL},1,32]
      -i 0
      -o $output.xfm
      --number-of-affine-iterations 10000x10000x10000x10000x10000
      --MI-option 32x32000
      --use-Histogram-Matching
-     --rigid-affine true
+     --do-rigid true
+     --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4
     """
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -like ${MNIMODEL} -transform $output.xfm $input.mnc $output.mnc
+    mincresample -verbose -clobber -2 -short -unsigned -like ${RIGIDMODEL} -transform $output.xfm $input.mnc $output.mnc
+    """
+}
+
+affine_register = {
+    //Affinely registers brain to a given model
+    //Transforms brain to model space
+    //Requires minc-toolkit
+    exec """
+    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
+    mincANTS 3 -m MI[$input.mnc,${AFFINEMODEL},1,32] 
+     -i 0
+     -o $output.xfm
+     --number-of-affine-iterations 10000x10000x10000x10000x10000
+     --MI-option 32x32000
+     --use-Histogram-Matching
+    """
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned -like ${AFFINEMODEL} -transform $output.xfm $input.mnc $output.mnc
+    """
+}
+
+affine_register_masked = {
+    //Affinely registers brain to a given model
+    //Transforms brain to model space
+    //Uses brain mask for model
+    //Mask must be in "fixed" space, so this registration must be setup backwards
+    //Requires minc-toolkit
+    exec """
+    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
+    mincANTS 3 -m MI[${AFFINEMODEL},$input.mnc,1,64]
+     -i 0
+     -x ${REGISTRATIONMASK}
+     -o $output.xfm
+     --number-of-affine-iterations 10000x10000x10000x10000x10000
+     --MI-option 64x64000
+     --use-Histogram-Matching
+    """
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned -like ${AFFINEMODEL} -transform ${output.xfm.prefix}_inverse.xfm $input.mnc $output.mnc
     """
 }
 
@@ -124,10 +171,14 @@ beastmask = {
     }
 }
 
-
 beastextract = {
     //Applies the mask from beastmask to the original input file to extract the brain
     exec "minccalc -clobber -expression A[0]*A[1] $origname $input.mnc $output.mnc"
+}
+
+linear_register = segment {
+    //Multi-stage registration to a model
+    rigid_register + affine_register + affine_register_masked
 }
 
 beast = segment {
@@ -136,7 +187,7 @@ beast = segment {
     //Requires minc-toolkit
     //Now registers the brain to MNI space first using mincANTS
     //http://www.ncbi.nlm.nih.gov/pubmed/21945694
-    MNI_register + beastnormalize + beastmask + beastextract
+    linear_register + beastnormalize + beastmask + beastextract
 }
 
 defaceapply = {
@@ -148,13 +199,13 @@ defaceapply = {
 deface = segment {
     //Linear registers brain to MNI space
     //Applies inverse facemask to MRI data
-    MNI_register + defaceapply
+    linear_register + defaceapply
 }
 
 cutneck = segment {
     //Linearly registers brain to MNI space
     //Applies neckmask to MRI data
-    MNI_register + cutneckapply
+    linear_register + cutneckapply
 }
 
 resample = {
@@ -177,5 +228,5 @@ preprocess = segment {
 }
 
 Bpipe.run {
- "%.mnc" * [preprocess]
+ "%.mnc" * [linear_register]
 }
