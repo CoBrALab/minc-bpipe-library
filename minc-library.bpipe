@@ -113,6 +113,7 @@ cutneckapply = {
     exec """
     minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${output("${branch.name}.headmask.mnc")} ${nativemnc} ${output("${branch.name}.cutneckapply.mnc")}
     """
+    forward output("${branch.name}.cutneckapply.mnc")
 }
 
 rigid_register = {
