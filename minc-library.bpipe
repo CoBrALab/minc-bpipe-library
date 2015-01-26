@@ -90,10 +90,28 @@ inormalize = {
     //Performal normalization against a model using inormalize (normalize_mri)
 }
 
-
 cutneckapply = {
+    //Applies the headmask to the model registered brain
+    //Transforms the model headmask to native space
+    //Applies the native headmask to the brain in native space
+    //Order of these operations matter due to weird handling of output variables
+    
+    //Applies model mask to subject brain in model space
     exec """
     minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${CUTNECKMODEL}_headmask.mnc $input.mnc $output.mnc
+    """
+ 
+    //Transforms model mask to native space
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned -near -keep
+    -like ${nativemnc}
+    -transform $input.xfm 
+    ${CUTNECKMODEL}_headmask.mnc ${output("${branch.name}.headmask.mnc")}
+    """
+   
+    //Applies mask to subject brain in native space
+    exec """
+    minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${output("${branch.name}.headmask.mnc")} ${nativemnc} ${output("${branch.name}.cutneckapply.mnc")}
     """
 }
 
