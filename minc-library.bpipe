@@ -179,15 +179,15 @@ affine_register_masked = {
 }
 
 beastnormalize = {
-    //Linearly scales the intensities to the range [0;100] using 0.1%–99.9%
+    //Linearly scales the intensities to the range [0;100] using 0.1%-99.9%
     //of the voxels in the intensity histogram
     //No registration or n3 since this is done in prior steps
-    branch.origname = "$input.mnc"
-    exec "beast_normalize $input.mnc $output.mnc $output.xfm -non3 -noreg -modeldir ${BEASTMODEL_DIR} -modelname ${BEASTMODEL_NAME}"
+    branch.modelmnc = "$input.mnc.prefix"
+    exec "beast_normalize $input.mnc $output.mnc /tmp/dummy.xfm -non3 -noreg -modeldir ${BEASTMODEL_DIR} -modelname ${BEASTMODEL_NAME}"
 }
 
 beastmask = {
-    //The core mincbeast algorithm, generates a mask from patches
+    //Generates a brain mask for subject brain in model space
     uses(GB:9) {
     exec "mincbeast -clobber -verbose -fill -median -same_res -flip -conf ${BEASTLIBRARY_DIR}/default.1mm.conf ${BEASTLIBRARY_DIR} $input.mnc $output.mnc"
     }
@@ -195,7 +195,24 @@ beastmask = {
 
 beastextract = {
     //Applies the mask from beastmask to the original input file to extract the brain
-    exec "minccalc -clobber -expression A[0]*A[1] $origname $input.mnc $output.mnc"
+    
+    //Apply brain mask to original registered brain
+    exec """
+    minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] $input.mnc ${branch.modelmnc}.mnc ${output("${branch.modelmnc}.beastextract.mnc")}
+    """
+   
+    //Transform brain mask to native space
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned -near -keep
+    -like ${nativemnc}
+    -transform $input.xfm 
+    $input.mnc ${output("${branch.name}.beastmask.mnc")}
+    """
+
+    //Apply brain mask to subject brain in native space
+    exec """
+    minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] ${nativemnc}  ${output("${branch.name}.beastmask.mnc")} ${output("${branch.name}.beastextract.mnc")}
+    """ 
 }
 
 linear_register = segment {
