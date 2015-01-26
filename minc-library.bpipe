@@ -93,7 +93,7 @@ cutneckapply = {
     //Transforms the model headmask to native space
     //Applies the native headmask to the brain in native space
     //Order of these operations matter due to weird handling of output variables
-    
+
     //Applies model mask to subject brain in model space
     exec """
     minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${CUTNECKMODEL}_headmask.mnc $input.mnc $output.mnc
@@ -105,10 +105,10 @@ cutneckapply = {
     exec """
     mincresample -verbose -clobber -2 -short -unsigned -near -keep
     -like ${nativemnc}
-    -transform $input.xfm 
+    -transform $input.xfm
     ${CUTNECKMODEL}_headmask.mnc ${output("${branch.name}.headmask.mnc")}
     """
-   
+
     //Applies mask to subject brain in native space
     exec """
     minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${output("${branch.name}.headmask.mnc")} ${nativemnc} ${output("${branch.name}.cutneckapply.mnc")}
@@ -158,7 +158,7 @@ affine_register = {
     //Requires minc-toolkit
     exec """
     ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
-    mincANTS 3 -m MI[${REGISTRATIONMODEL},$input.mnc,1,32] 
+    mincANTS 3 -m MI[${REGISTRATIONMODEL},$input.mnc,1,32]
      -i 0
      -x ${REGISTRATIONHEADMASK}
      -o $output.xfm
@@ -188,7 +188,7 @@ affine_register_masked = {
      --use-Histogram-Matching
      --initial-affine $input.xfm
     """
-    
+
     exec """
     mincresample -verbose -clobber -2 -short -unsigned -sinc
     -like ${REGISTRATIONMODEL}
@@ -214,24 +214,24 @@ beastmask = {
 
 beastextract = {
     //Applies the mask from beastmask to the original input file to extract the brain
-    
+
     //Apply brain mask to original registered brain
     exec """
     minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] $input.mnc ${branch.modelmnc}.mnc ${output("${branch.modelmnc}.beastextract.mnc")}
     """
-   
+
     //Transform brain mask to native space
     exec """
     mincresample -verbose -clobber -2 -short -unsigned -near -keep
     -like ${nativemnc}
-    -transform $input.xfm 
+    -transform $input.xfm
     $input.mnc ${output("${branch.name}.beastmask.mnc")}
     """
 
     //Apply brain mask to subject brain in native space
     exec """
     minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] ${nativemnc}  ${output("${branch.name}.beastmask.mnc")} ${output("${branch.name}.beastextract.mnc")}
-    """ 
+    """
 }
 
 linear_register = segment {
@@ -258,11 +258,11 @@ defaceapply = {
     exec """
     mincresample -verbose -clobber -2 -short -unsigned -near -keep
     -like ${nativemnc}
-    -transform $input.xfm 
+    -transform $input.xfm
     ${DEFACEMODEL}_face_mask_res.mnc ${output("${branch.name}.facemask.mnc")}
     """
 
-    exec """ 
+    exec """
     minccalc -2 -short -unsigned -verbose -clobber -expression 'A[0]*(1 - A[1])' ${nativemnc} ${output("${branch.name}.facemask.mnc")} ${output("${branch.name}.defaceapply.mnc")}
     """
 }
@@ -299,5 +299,5 @@ preprocess = segment {
 }
 
 Bpipe.run {
- "%.mnc" * [linear_register]
+ "%.mnc" * [preprocess]
 }
