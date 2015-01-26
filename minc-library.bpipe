@@ -100,7 +100,9 @@ cutneckapply = {
     exec """
     minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${CUTNECKMODEL}_headmask.mnc $input.mnc $output.mnc
     """
- 
+
+    forward output.mnc
+
     //Transforms model mask to native space
     exec """
     mincresample -verbose -clobber -2 -short -unsigned -near -keep
@@ -113,7 +115,6 @@ cutneckapply = {
     exec """
     minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${output("${branch.name}.headmask.mnc")} ${nativemnc} ${output("${branch.name}.cutneckapply.mnc")}
     """
-    forward output("${branch.name}.cutneckapply.mnc")
 }
 
 rigid_register = {
