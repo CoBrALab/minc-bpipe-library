@@ -232,7 +232,20 @@ beast = segment {
 defaceapply = {
     //Applies the inverse face mask to the MRI volume
     //Expects the brain to be in MNI space
-    exec "minccalc -expression A[0]*(1 - A[1]) $input.mnc ${DEFACEMODEL}_face_mask_res.mnc $output.mnc"
+    exec """
+    minccalc -2 -short -unsigned -verbose -clobber -expression 'A[0]*(1 - A[1])' $input.mnc ${DEFACEMODEL}_face_mask_res.mnc $output.mnc
+    """
+
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned -near -keep
+    -like ${nativemnc}
+    -transform $input.xfm 
+    ${DEFACEMODEL}_face_mask_res.mnc ${output("${branch.name}.facemask.mnc")}
+    """
+
+    exec """ 
+    minccalc -2 -short -unsigned -verbose -clobber -expression 'A[0]*(1 - A[1])' ${nativemnc} ${output("${branch.name}.facemask.mnc")} ${output("${branch.name}.defaceapply.mnc")}
+    """
 }
 
 deface = segment {
