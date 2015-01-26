@@ -109,13 +109,11 @@ rigid_register = {
      --do-rigid true
      --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4
     """
-    exec """
-    mincresample -verbose -clobber -2 -short -unsigned -sinc -like ${RIGIDMODEL} -transform $output.xfm $input.mnc $output.mnc
-    """
 }
 
 affine_register = {
     //Affinely registers brain to a given model
+    //Uses rigid transformation passed from previous stage
     //Transforms brain to model space
     //Requires minc-toolkit
     exec """
@@ -126,18 +124,18 @@ affine_register = {
      --number-of-affine-iterations 10000x10000x10000x10000x10000
      --MI-option 32x32000
      --use-Histogram-Matching
-    """
-    exec """
-    mincresample -verbose -clobber -2 -short -unsigned -sinc -like ${AFFINEMODEL} -transform $output.xfm $input.mnc $output.mnc
+     --initial-affine $input.xfm
     """
 }
 
 affine_register_masked = {
     //Affinely registers brain to a given model
     //Transforms brain to model space
+    //Uses affine regstration passed from previous stage
     //Uses brain mask for model
     //Mask must be in "fixed" space, so this registration must be setup backwards
     //Requires minc-toolkit
+    
     exec """
     ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
     mincANTS 3 -m MI[${AFFINEMODEL},$input.mnc,1,64]
@@ -147,9 +145,14 @@ affine_register_masked = {
      --number-of-affine-iterations 10000x10000x10000x10000x10000
      --MI-option 64x64000
      --use-Histogram-Matching
+     --initial-affine ${input.xfm.prefix}_inverse.xfm
     """
+    
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -sinc -like ${AFFINEMODEL} -transform ${output.xfm.prefix}_inverse.xfm $input.mnc $output.mnc
+    mincresample -verbose -clobber -2 -short -unsigned -sinc
+    -like ${AFFINEMODEL}
+    -transform ${output.xfm.prefix}_inverse.xfm
+    $input.mnc $output.mnc
     """
 }
 
