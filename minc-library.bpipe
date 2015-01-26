@@ -29,6 +29,7 @@ REGISTRATIONMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_i
 //NORMALIZEMODEL="/path/to/model.mnc"
 
 n3correct = {
+    branch.name = "${branch.name}.n3correct"
     //Runs the nu_correct (aka n3correct) command with optimal settings according to
     //http://www.ncbi.nlm.nih.gov/pubmed/19559796
     //Requires minc-toolkit
@@ -36,6 +37,7 @@ n3correct = {
 }
 
 nlm_denoise = {
+    branch.name = "${branch.name}.nlm_denoise"
     //Runs non-local-means filter on data
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=4359947
     //Requires minc-toolkit
@@ -43,6 +45,7 @@ nlm_denoise = {
 }
 
 anlm_denoise = {
+    branch.name = "${branch.name}.anlm_denoise"
     //Runs the "improved" adaptive non local means filter
     //http://onlinelibrary.wiley.com/doi/10.1002/jmri.22003/full
     //Requires minc-toolkit
@@ -50,6 +53,7 @@ anlm_denoise = {
 }
 
 n4correct = {
+    branch.name = "${branch.name}.n4correct"
     //Runs the improved n3correct aka N4correct
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
     //Requires ANTs as it uses ANTs/ITK's implementation, as minc-toolkit's is buggy
