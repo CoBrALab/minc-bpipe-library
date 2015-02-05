@@ -225,7 +225,7 @@ beastnormalize = {
     //of the voxels in the intensity histogram
     //No registration or n3 since this is done in prior steps
     branch.modelmnc = "$input.mnc.prefix"
-    exec "beast_normalize $input.mnc $output.mnc /tmp/dummy.xfm -non3 -noreg -modeldir ${BEASTMODEL_DIR} -modelname ${BEASTMODEL_NAME}"
+    exec "beast_normalize $input.mnc $output.mnc ~/dummy.xfm -non3 -noreg -modeldir ${BEASTMODEL_DIR} -modelname ${BEASTMODEL_NAME}"
 }
 
 beastmask = {
