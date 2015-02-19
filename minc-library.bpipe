@@ -60,12 +60,15 @@ n4correct = {
 }
 
 dumb_normalize = {
-	//Performs a dumb normalization of the data, throwing away top and bottom 1%
-	//Data is then scaled 0-65535 and stored in a sensible unsigned int format
-	//Requires minc-toolkit
-	exec """
-	minccalc -2 -clobber -expression "A[0]<(0.01*\$(mincstats -quiet -max $input.mnc)) || A[0]>(0.99*\$(mincstats -quiet -max $input.mnc)) ? 0 : A[0]/(\$(mincstats -quiet -max $input.mnc)*0.99)*65535" $input.mnc $output.mnc
-	"""
+    //Performs a dumb normalization of the data, throwing away top and bottom 1%
+    //Data is then scaled 0-65535 and stored in a sensible unsigned int format
+    //Requires minc-toolkit
+    exec """
+    minccalc -2 -short -unsigned -clobber -expression "A[0]<(0.01*\$(mincstats -quiet -max $input.mnc)) || A[0]>(0.99*\$(mincstats -quiet -max $input.mnc)) ? 0 : A[0]" $input.mnc $output.tmp
+    """
+    exec """
+    minccalc -2 -short -unsigned -clobber -expression "A[0]/\$(mincstats -quiet -max $output.tmp)*65535" $output.tmp $output.mnc
+    """
 }
 
 nuyl_normalize = {
