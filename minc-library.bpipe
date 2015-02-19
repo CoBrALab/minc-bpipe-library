@@ -26,6 +26,17 @@ REGISTRATIONHEADMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/m
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
 
+mincconvert = {
+    branch.name = "${branch.name}.mincconvert"
+    //Runs mincconvert to make minc2 files
+    //minc2 files are requied for some stages
+    //This should be run first if files are minc1
+    //Requires minc-toolkit
+    exec """
+    mincconvert -2 -clobber -compress 9 $input.mnc $output.mnc
+    """
+}
+
 n3correct = {
     branch.name = "${branch.name}.n3correct"
     //Runs the nu_correct (aka n3correct) command with optimal settings according to
