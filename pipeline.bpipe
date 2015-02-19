@@ -1,0 +1,6 @@
+load "minc-library.bpipe"
+
+run {
+ "%.mnc" * [n4correct + linear_register + cutneckapplyautocrop + VBM]
+}
+

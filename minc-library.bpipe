@@ -371,6 +371,3 @@ preprocess = segment {
 	anlm_denoise + n4correct
 }
 
-Bpipe.run {
- "%.mnc" * [preprocess]
-}
