@@ -22,9 +22,14 @@ REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_
 REGISTRATIONBRAINMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
 REGISTRATIONHEADMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_headmask.mnc"
 
-
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
+
+//Tagfile for VBM statistics
+VBMTAGDIR="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2"
+VBMTAGFILE="mni_icbm152_t1_tal_nlin_sym_09c_ntags_1000_prob_90_nobg.tag"
+VBMBGTAGFILE="mni_icbm152_t1_tal_nlin_sym_09c_ntags_1000_bg.tag"
+
 
 mincconvert = {
     branch.name = "${branch.name}.mincconvert"
@@ -259,6 +264,8 @@ beastextract = {
     minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] $input.mnc ${branch.modelmnc}.mnc ${output("${branch.modelmnc}.beastextract.mnc")}
     """
 
+    forward input.mnc
+
     //Transform brain mask to native space
     exec """
     mincresample -verbose -clobber -2 -short -unsigned -near -keep
@@ -273,6 +280,29 @@ beastextract = {
     """
 }
 
+classify_clean = {
+    //Classifies brain matter into white/gray/csf
+    //Requires registered brain and mask
+    //Requires minc-toolkit
+    exec """
+    classify_clean
+    -tagdir ${VBMTAGDIR}
+    -tagfile ${VBMTAGFILE}
+    -bgtagfile ${VBMBGTAGFILE}
+    -mask $input.mnc
+    -mask_source -clean_tags -clobber
+    ${branch.modelmnc}.mnc $output.mnc
+    """
+}
+
+extractvbm = {
+    //Extracts white/grey/csf from classified brain
+    //Requires minc-toolkit
+    multi   "smooth_mask -binvalue 1 -fwhm 10 ${input.mnc} $output.csf.mnc",
+            "smooth_mask -binvalue 2 -fwhm 10 ${input.mnc} $output.gm.mnc",
+            "smooth_mask -binvalue 3 -fwhm 10 ${input.mnc} $output.wm.mnc"
+}
+
 linear_register = segment {
     //Multi-stage registration to a model
     rough_register + affine_register + affine_register_masked
@@ -285,6 +315,10 @@ beast = segment {
     //Now registers the brain to MNI space first using mincANTS
     //http://www.ncbi.nlm.nih.gov/pubmed/21945694
     linear_register + beastnormalize + beastmask + beastextract
+}
+
+VBM = segment {
+    beast + classify_clean + extractvbm
 }
 
 defaceapply = {
