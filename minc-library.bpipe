@@ -84,7 +84,9 @@ pol_normalize = {
     //Performs normalization against a model using volume_pol
     //Requires NORMALIZEMODEL to be set to a reference mnc (atlas perhaps?)
     //
-
+    exec """
+    volume_pol --verbose --clobber --order 1 --min 0 --max 65535 $input.mnc ${NORMALIZEMODEL} $output.mnc
+    """
 }
 
 inormalize = {
