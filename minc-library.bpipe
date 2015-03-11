@@ -241,6 +241,48 @@ affine_register_masked = {
     """
 }
 
+nonlinear_register = {
+    //Nonlinearly registers brain to a given model
+    //Transforms brain to model space
+    //Uses affine regstration passed from previous stage
+    //Uses brain mask for model
+    //Mask must be in "fixed" space, so this registration must be setup backwards
+    //Requires minc-toolkit
+    BASENAME="$output.mnc.prefix"
+    exec """
+    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=8
+    mincANTS 3 -m CC[$input.mnc,${REGISTRATIONMODEL},1,4]
+     -r Gauss[3,0]
+     -t SyN[0.5]
+     -i 100x100x100x20
+     -o $output.xfm
+     --use-Histogram-Matching
+     --continue-affine false
+    """
+
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned -sinc
+    -like ${REGISTRATIONMODEL}
+    -transform $output.xfm
+    $input.mnc $output.mnc
+    """
+
+    forward output.mnc
+
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned -near -keep
+    -like ${REGISTRATIONMODEL}
+    -transform ${output.xfm}
+    ${REGISTRATIONBRAINMASK} ${output("${BASENAME}.nonlinmask.mnc")}
+    """
+
+    exec """
+    mincmorph -clobber -verbose -byte -successive DDDDD ${BASENAME}.nonlinmask.mnc ${output("${BASENAME}.nonlinmask.dilation.mnc")}
+    """
+
+    branch.nonlinmnc = "${BASENAME}"
+}
+
 beastnormalize = {
     //Linearly scales the intensities to the range [0;100] using 0.1%-99.9%
     //of the voxels in the intensity histogram
@@ -285,23 +327,45 @@ classify_clean = {
     //Requires registered brain and mask
     //Requires minc-toolkit
     exec """
-    classify_clean
+    classify_clean -clobber
     -tagdir ${VBMTAGDIR}
     -tagfile ${VBMTAGFILE}
     -bgtagfile ${VBMBGTAGFILE}
-    -mask $input.mnc
+    -mask ${branch.nonlinmnc}.nonlinmask.dilation.mnc
     -mask_source -clean_tags -clobber
-    ${branch.modelmnc}.mnc $output.mnc
+    $input.mnc $output.mnc
     """
 }
 
 extractvbm = {
     //Extracts white/grey/csf from classified brain
     //Requires minc-toolkit
-    multi   "smooth_mask -binvalue 1 -fwhm 10 ${input.mnc} $output.csf.mnc",
-            "smooth_mask -binvalue 2 -fwhm 10 ${input.mnc} $output.gm.mnc",
-            "smooth_mask -binvalue 3 -fwhm 10 ${input.mnc} $output.wm.mnc"
+    BASENAME="$output.mnc.prefix"
+
+    multi   "smooth_mask -clobber -binvalue 1 -fwhm 2 ${input.mnc} ${output("${BASENAME}.2mm.csf.mnc")}",
+            "smooth_mask -clobber -binvalue 2 -fwhm 2 ${input.mnc} ${output("${BASENAME}.2mm.gm.mnc")}",
+            "smooth_mask -clobber -binvalue 3 -fwhm 2 ${input.mnc} ${output("${BASENAME}.2mm.wm.mnc")}",
+            "smooth_mask -clobber -binvalue 1 -fwhm 4 ${input.mnc} ${output("${BASENAME}.4mm.csf.mnc")}",
+            "smooth_mask -clobber -binvalue 2 -fwhm 4 ${input.mnc} ${output("${BASENAME}.4mm.gm.mnc")}",
+            "smooth_mask -clobber -binvalue 3 -fwhm 4 ${input.mnc} ${output("${BASENAME}.4mm.wm.mnc")}",
+            "smooth_mask -clobber -binvalue 1 -fwhm 6 ${input.mnc} ${output("${BASENAME}.6mm.csf.mnc")}",
+            "smooth_mask -clobber -binvalue 2 -fwhm 6 ${input.mnc} ${output("${BASENAME}.6mm.gm.mnc")}",
+            "smooth_mask -clobber -binvalue 3 -fwhm 6 ${input.mnc} ${output("${BASENAME}.6mm.wm.mnc")}"
+    exec    "mincresample -clobber -like ${input.mnc} ${branch.nonlinmnc}_inverse_grid_0.mnc ${branch.nonlinmnc}_inverse_grid_0_resampled.mnc"
+    multi   "mincblur -clobber -verbose -fwhm 2 ${branch.nonlinmnc}_inverse_grid_0_resampled.mnc ${output("${BASENAME}.2mm.grid")}",
+            "mincblur -clobber -verbose -fwhm 4 ${branch.nonlinmnc}_inverse_grid_0_resampled.mnc ${output("${BASENAME}.4mm.grid")}",
+            "mincblur -clobber -verbose -fwhm 6 ${branch.nonlinmnc}_inverse_grid_0_resampled.mnc ${output("${BASENAME}.6mm.grid")}"
+    multi   "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.2mm.grid_blur.mnc ${BASENAME}.2mm.csf.mnc ${output("${BASENAME}.2mm.modulated.csf.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.2mm.grid_blur.mnc ${BASENAME}.2mm.gm.mnc ${output("${BASENAME}.2mm.modulated.gm.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.2mm.grid_blur.mnc ${BASENAME}.2mm.wm.mnc ${output("${BASENAME}.2mm.modulated.wm.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.4mm.grid_blur.mnc ${BASENAME}.4mm.csf.mnc ${output("${BASENAME}.4mm.modulated.csf.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.4mm.grid_blur.mnc ${BASENAME}.4mm.gm.mnc ${output("${BASENAME}.4mm.modulated.gm.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.4mm.grid_blur.mnc ${BASENAME}.4mm.wm.mnc ${output("${BASENAME}.4mm.modulated.wm.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.6mm.grid_blur.mnc ${BASENAME}.6mm.csf.mnc ${output("${BASENAME}.6mm.modulated.csf.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.6mm.grid_blur.mnc ${BASENAME}.6mm.gm.mnc ${output("${BASENAME}.6mm.modulated.gm.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.6mm.grid_blur.mnc ${BASENAME}.6mm.wm.mnc ${output("${BASENAME}.6mm.modulated.wm.mnc")}"
 }
+
 
 linear_register = segment {
     //Multi-stage registration to a model
@@ -370,4 +434,3 @@ preprocess = segment {
 	//is denoise + n3 or n4 + normalize + beast or cutneck + resample
 	anlm_denoise + n4correct
 }
-
