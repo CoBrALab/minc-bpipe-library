@@ -352,18 +352,18 @@ extractvbm = {
             "smooth_mask -clobber -binvalue 2 -fwhm 6 ${input.mnc} ${output("${BASENAME}.6mm.gm.mnc")}",
             "smooth_mask -clobber -binvalue 3 -fwhm 6 ${input.mnc} ${output("${BASENAME}.6mm.wm.mnc")}"
     exec    "mincresample -clobber -like ${input.mnc} ${branch.nonlinmnc}_inverse_grid_0.mnc ${branch.nonlinmnc}_inverse_grid_0_resampled.mnc"
-    multi   "mincblur -clobber -verbose -fwhm 2 ${branch.nonlinmnc}_inverse_grid_0_resampled.mnc ${output("${BASENAME}.2mm.grid")}",
-            "mincblur -clobber -verbose -fwhm 4 ${branch.nonlinmnc}_inverse_grid_0_resampled.mnc ${output("${BASENAME}.4mm.grid")}",
-            "mincblur -clobber -verbose -fwhm 6 ${branch.nonlinmnc}_inverse_grid_0_resampled.mnc ${output("${BASENAME}.6mm.grid")}"
-    multi   "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.2mm.grid_blur.mnc ${BASENAME}.2mm.csf.mnc ${output("${BASENAME}.2mm.modulated.csf.mnc")}",
-            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.2mm.grid_blur.mnc ${BASENAME}.2mm.gm.mnc ${output("${BASENAME}.2mm.modulated.gm.mnc")}",
-            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.2mm.grid_blur.mnc ${BASENAME}.2mm.wm.mnc ${output("${BASENAME}.2mm.modulated.wm.mnc")}",
-            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.4mm.grid_blur.mnc ${BASENAME}.4mm.csf.mnc ${output("${BASENAME}.4mm.modulated.csf.mnc")}",
-            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.4mm.grid_blur.mnc ${BASENAME}.4mm.gm.mnc ${output("${BASENAME}.4mm.modulated.gm.mnc")}",
-            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.4mm.grid_blur.mnc ${BASENAME}.4mm.wm.mnc ${output("${BASENAME}.4mm.modulated.wm.mnc")}",
-            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.6mm.grid_blur.mnc ${BASENAME}.6mm.csf.mnc ${output("${BASENAME}.6mm.modulated.csf.mnc")}",
-            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.6mm.grid_blur.mnc ${BASENAME}.6mm.gm.mnc ${output("${BASENAME}.6mm.modulated.gm.mnc")}",
-            "minccalc -clobber -verbose  -expression '(A[0] >= 0 ? A[0] + 1 : A[0] - 1) * A[1]' ${BASENAME}.6mm.grid_blur.mnc ${BASENAME}.6mm.wm.mnc ${output("${BASENAME}.6mm.modulated.wm.mnc")}"
+    multi   "mincblur -clobber -verbose -fwhm 2 ${branch.nonlinmnc}_inverse_grid_0_resampled.mnc ${BASENAME}.2mm.grid",
+            "mincblur -clobber -verbose -fwhm 4 ${branch.nonlinmnc}_inverse_grid_0_resampled.mnc ${BASENAME}.4mm.grid",
+            "mincblur -clobber -verbose -fwhm 6 ${branch.nonlinmnc}_inverse_grid_0_resampled.mnc ${BASENAME}.6mm.grid"
+    multi   "minccalc -clobber -verbose  -expression '(A[0]+1) * A[1]' ${BASENAME}.2mm.grid_blur.mnc ${BASENAME}.2mm.csf.mnc ${output("${BASENAME}.2mm.modulated.csf.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0]+1) * A[1]' ${BASENAME}.2mm.grid_blur.mnc ${BASENAME}.2mm.gm.mnc ${output("${BASENAME}.2mm.modulated.gm.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0]+1) * A[1]' ${BASENAME}.2mm.grid_blur.mnc ${BASENAME}.2mm.wm.mnc ${output("${BASENAME}.2mm.modulated.wm.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0]+1) * A[1]' ${BASENAME}.4mm.grid_blur.mnc ${BASENAME}.4mm.csf.mnc ${output("${BASENAME}.4mm.modulated.csf.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0]+1) * A[1]' ${BASENAME}.4mm.grid_blur.mnc ${BASENAME}.4mm.gm.mnc ${output("${BASENAME}.4mm.modulated.gm.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0]+1) * A[1]' ${BASENAME}.4mm.grid_blur.mnc ${BASENAME}.4mm.wm.mnc ${output("${BASENAME}.4mm.modulated.wm.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0]+1) * A[1]' ${BASENAME}.6mm.grid_blur.mnc ${BASENAME}.6mm.csf.mnc ${output("${BASENAME}.6mm.modulated.csf.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0]+1) * A[1]' ${BASENAME}.6mm.grid_blur.mnc ${BASENAME}.6mm.gm.mnc ${output("${BASENAME}.6mm.modulated.gm.mnc")}",
+            "minccalc -clobber -verbose  -expression '(A[0]+1) * A[1]' ${BASENAME}.6mm.grid_blur.mnc ${BASENAME}.6mm.wm.mnc ${output("${BASENAME}.6mm.modulated.wm.mnc")}"
 }
 
 
