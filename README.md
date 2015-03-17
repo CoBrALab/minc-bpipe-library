@@ -3,6 +3,8 @@ Library of bpipe functions for processing minc files
 
 minc-bpipe-library provides a set of chainable minc file processing functions to (pre)process data.
 
+It requires http://www.bic.mni.mcgill.ca/ServicesSoftware/ServicesSoftwareMincToolKit, https://stnava.github.io/ANTs/, and https://github.com/ssadedin/bpipe/
+
 To control which stages are run, edit ``pipeline.bpipe`` and add stage names using "+" to the "run" stage.
 
 Stages are listed in the ``minc-library.bpipe``, correction stages such as denoising, n3 and n4, and normalize
