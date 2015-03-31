@@ -72,7 +72,7 @@ n4correct = {
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
     //Requires ANTs as it uses ANTs/ITK's implementation, as minc-toolkit's is buggy
     //ANTs must be loaded after minc-toolkit to override the minc-toolkit version
-    exec "N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -i $input.mnc -o $output.mnc"
+    exec "N4BiasFieldCorrection -d 3 -t -r -b [200] -c [200x200x200x200,0.0] -i $input.mnc -o $output.mnc"
 }
 
 dumb_normalize = {
