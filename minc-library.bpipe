@@ -72,7 +72,24 @@ n4correct = {
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
     //Requires ANTs as it uses ANTs/ITK's implementation, as minc-toolkit's is buggy
     //ANTs must be loaded after minc-toolkit to override the minc-toolkit version
-    exec "N4BiasFieldCorrection -d 3 -t -r -b [200] -c [200x200x200x200,0.0] -i $input.mnc -o $output.mnc"
+    //Correction is done with a mask as per http://dx.doi.org/10.1016/j.neuroimage.2007.10.026
+    exec """
+    tmpdir=`mktemp -d`;
+    N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -i $input.mnc -o \$tmpdir/0.mnc;
+    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
+    mincANTS 3 -m MI[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32]
+     -i 0
+     -o \$tmpdir/0.xfm
+     --number-of-affine-iterations 2000x1000x500x250x100
+     --MI-option 32x32000
+     --use-Histogram-Matching
+     --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4;
+    mincresample -clobber -keep -near -like $input.mnc -transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/mask.mnc;
+    mincmorph -clobber -verbose -successive DDD \$tmpdir/mask.mnc \$tmpdir/maskD.mnc;
+    N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -x \$tmpdir/maskD.mnc -i $input.mnc -o $output.mnc;
+    sleep 10;
+    rm -r \$tmpdir
+    """
 }
 
 dumb_normalize = {
