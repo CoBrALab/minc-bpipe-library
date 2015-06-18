@@ -37,6 +37,6 @@ New (experimental) operation on SciNet is now implemented
 Steps
 
 1. Comment output the queueing details in bpipe.config
-2. ``sed -i 's#/opt/quarantine#/project/m/mchakrav/quarantine#/g' minc-library.bpipe``
+2. ``sed -i 's#/opt/quarantine#/project/m/mchakrav/quarantine#g' minc-library.bpipe``
 3. Use ``bpipe-batch.sh /path/to/pipeline.bpipe <list of files>`` to generate a joblist
 4. Use ``qbatch joblist 1 12:00:00`` to submit jobs to scinet queing system
