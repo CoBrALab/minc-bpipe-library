@@ -285,7 +285,7 @@ beastextract = {
 
     //Transform brain mask to native space
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -near -keep
+    mincresample -verbose -clobber -2 -byte -unsigned -near -keep
     -like ${nativemnc}
     -transform $input.xfm
     $input.mnc ${output("${branch.name}.beastmask.mnc")}
