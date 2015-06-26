@@ -172,7 +172,7 @@ cutneckapplyautocrop = {
 
     //Applies mask to subject brain in native space
     exec """
-    autocrop -clobber -short -bbox ${output("${branch.name}.headmask.mnc")} -extend 5,5 5,5 0,5 ${nativemnc} ${output("${branch.name}.cutneckapplyautocrop.mnc")}
+    autocrop -clobber -short -unsigned -bbox ${output("${branch.name}.headmask.mnc")} -extend 5,5 5,5 0,5 ${nativemnc} ${output("${branch.name}.cutneckapplyautocrop.mnc")}
     """
 }
 
