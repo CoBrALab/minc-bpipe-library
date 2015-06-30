@@ -268,7 +268,7 @@ beastnormalize = {
 
 beastmask = {
     //Generates a brain mask for subject brain in model space
-    uses(GB:6) {
+    uses(GB:9) {
     exec "mincbeast -clobber -verbose -fill -median -same_res -flip -conf ${BEASTLIBRARY_DIR}/default.1mm.conf ${BEASTLIBRARY_DIR} $input.mnc $output.mnc"
     }
 }
