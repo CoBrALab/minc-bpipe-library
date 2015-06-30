@@ -32,12 +32,13 @@ the pipeline. This is a very good file to keep around as as a note of what happe
 Some stages produce both ``mnc`` files and ``xfm`` files, see the ``$output`` variables for what is generated.
 
 #Scinet Operation
-New (experimental) operation on SciNet is now implemented
+New (experimental) operation on SciNet is now implemented. Inputs are split into 8 file chunks and submitted
+as local bpipe jobs on scinet nodes
 
 Steps
 
-1. Comment "executor" and "queue" in bpipe.config with ``//``
+1. ``rm bpipe.config``
 2. ``sed -i 's#/opt/quarantine#/project/m/mchakrav/quarantine#g' minc-library.bpipe``
-3. Use ``bpipe-batch.sh /path/to/pipeline.bpipe <list of files>`` to generate a joblist
-4. ``module load minc-toolkit/git ANTs bpipe java`` #You will need to deal with module dependencies
+3. ``source scinet-modules`` #This wipes out your existing module setup for this session!
+4. Use ``bpipe-batch.sh /path/to/pipeline.bpipe <list of files> > joblist`` to generate a joblist
 5. Use ``qbatch joblist 1 48:00:00`` to submit jobs to scinet queing system
