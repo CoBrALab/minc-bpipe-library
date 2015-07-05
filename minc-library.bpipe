@@ -76,14 +76,7 @@ n4correct = {
     exec """
     tmpdir=`mktemp -d`;
     N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -i $input.mnc -o \$tmpdir/0.mnc;
-    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
-    mincANTS 3 -m MI[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32]
-     -i 0
-     -o \$tmpdir/0.xfm
-     --number-of-affine-iterations 2000x1000x500x250x100
-     --MI-option 32x32000
-     --use-Histogram-Matching
-     --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4;
+    bestlinreg.pl -lsq12 ${REGISTRATIONMODEL} $input.mnc \$tmpdir/0.xfm;
     mincresample -clobber -keep -near -like $input.mnc -transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/mask.mnc;
     mincmorph -clobber -verbose -successive DDD \$tmpdir/mask.mnc \$tmpdir/maskD.mnc;
     N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -x \$tmpdir/maskD.mnc -i $input.mnc -o $output.mnc;
@@ -200,14 +193,7 @@ rough_register = {
     //Requires minc-toolkit
     branch.nativemnc = "$input.mnc"
     exec """
-    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
-    mincANTS 3 -m MI[${REGISTRATIONMODEL},$input.mnc,1,32]
-     -i 0
-     -o $output.xfm
-     --number-of-affine-iterations 10000x10000x10000x10000x10000x10000
-     --MI-option 32x32000
-     --use-Histogram-Matching
-     --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4
+    bestlinreg.pl -lsq12 ${REGISTRATIONMODEL} $input.mnc $output.xfm
     """
 }
 
