@@ -243,6 +243,29 @@ affine_register_masked = {
     """
 }
 
+nonlinear_register = {
+    //Nonlinearly registers brain to a given model
+    //Transforms brain to model space
+    //Uses affine regstration passed from previous stage
+    //Uses brain mask for model
+    //Mask must be in "fixed" space, so this registration must be setup backwards
+    //Requires minc-toolkit
+    branch.nonlinmnc="$output.xfm.prefix"
+    exec """
+    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=8
+    mincANTS 3 -m CC[$input.mnc,${REGISTRATIONMODEL},1,4]
+     -r Gauss[3,0]
+     -t SyN[0.5]
+     -i 100x100x100x100x20
+     -o $output.xfm
+     --use-Histogram-Matching
+     --continue-affine false
+    """
+
+    forward input.mnc
+    branch.nonlintransform = "${output.xfm.prefix}_inverse.xfm"
+}
+
 beastnormalize = {
     //Linearly scales the intensities to the range [0;100] using 0.1%-99.9%
     //of the voxels in the intensity histogram
@@ -266,7 +289,7 @@ beastextract = {
     minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] $input.mnc ${branch.modelmnc}.mnc ${output("${branch.modelmnc}.beastextract.mnc")}
     """
 
-    forward input.mnc
+    forward output.mnc
 
     //Transform brain mask to native space
     exec """
@@ -291,18 +314,61 @@ classify_clean = {
     -tagdir ${VBMTAGDIR}
     -tagfile ${VBMTAGFILE}
     -bgtagfile ${VBMBGTAGFILE}
-    -mask $input.mnc
-    -mask_source -clean_tags -clobber
-    ${branch.modelmnc}.mnc $output.mnc
+    -tag_transform ${branch.nonlintransform}
+    -clean_tags -clobber
+    $input.mnc $output.mnc
     """
 }
 
 extractvbm = {
     //Extracts white/grey/csf from classified brain
     //Requires minc-toolkit
-    multi   "smooth_mask -binvalue 1 -fwhm 10 ${input.mnc} $output.csf.mnc",
-            "smooth_mask -binvalue 2 -fwhm 10 ${input.mnc} $output.gm.mnc",
-            "smooth_mask -binvalue 3 -fwhm 10 ${input.mnc} $output.wm.mnc"
+    branch.BASENAME="$output.mnc.prefix"
+    branch.extractvbmoutputs="$branch.BASENAME"
+    
+    forward input.mnc
+
+    multi   "smooth_mask -clobber -binvalue 1 -fwhm 8 ${input.mnc} ${output("${branch.BASENAME}.8mm.csf.mnc")}",
+            "smooth_mask -clobber -binvalue 2 -fwhm 8 ${input.mnc} ${output("${branch.BASENAME}.8mm.gm.mnc")}",
+            "smooth_mask -clobber -binvalue 3 -fwhm 8 ${input.mnc} ${output("${branch.BASENAME}.8mm.wm.mnc")}",
+            "smooth_mask -clobber -binvalue 1 -fwhm 4 ${input.mnc} ${output("${branch.BASENAME}.4mm.csf.mnc")}",
+            "smooth_mask -clobber -binvalue 2 -fwhm 4 ${input.mnc} ${output("${branch.BASENAME}.4mm.gm.mnc")}",
+            "smooth_mask -clobber -binvalue 3 -fwhm 4 ${input.mnc} ${output("${branch.BASENAME}.4mm.wm.mnc")}"
+    exec """
+    mincblob -clobber -determinant ${branch.nonlinmnc}_inverse_grid_0.mnc ${output("${branch.nonlinmnc}_inverse_grid_determinant.mnc")}
+    """
+    multi   "mincblur -clobber -verbose -fwhm 4 ${branch.nonlinmnc}_inverse_grid_determinant.mnc ${branch.BASENAME}.4mm.det #${output("${branch.BASENAME}.4mm.det_blur.mnc")}",
+            "mincblur -clobber -verbose -fwhm 8 ${branch.nonlinmnc}_inverse_grid_determinant.mnc ${branch.BASENAME}.8mm.det #${output("${branch.BASENAME}.8mm.det_blur.mnc")}"
+    multi   "minccalc -clobber -verbose  -expression 'A[0]*(A[1]+1)' ${branch.BASENAME}.4mm.csf.mnc ${branch.BASENAME}.4mm.det_blur.mnc ${output("${branch.BASENAME}.4mm.modulated.csf.mnc")}",
+            "minccalc -clobber -verbose  -expression 'A[0]*(A[1]+1)' ${branch.BASENAME}.4mm.gm.mnc ${branch.BASENAME}.4mm.det_blur.mnc ${output("${branch.BASENAME}.4mm.modulated.gm.mnc")}",
+            "minccalc -clobber -verbose  -expression 'A[0]*(A[1]+1)' ${branch.BASENAME}.4mm.wm.mnc ${branch.BASENAME}.4mm.det_blur.mnc ${output("${branch.BASENAME}.4mm.modulated.wm.mnc")}",
+            "minccalc -clobber -verbose  -expression 'A[0]*(A[1]+1)' ${branch.BASENAME}.8mm.csf.mnc ${branch.BASENAME}.8mm.det_blur.mnc ${output("${branch.BASENAME}.8mm.modulated.csf.mnc")}",
+            "minccalc -clobber -verbose  -expression 'A[0]*(A[1]+1)' ${branch.BASENAME}.8mm.gm.mnc ${branch.BASENAME}.8mm.det_blur.mnc ${output("${branch.BASENAME}.8mm.modulated.gm.mnc")}",
+            "minccalc -clobber -verbose  -expression 'A[0]*(A[1]+1)' ${branch.BASENAME}.8mm.wm.mnc ${branch.BASENAME}.8mm.det_blur.mnc ${output("${branch.BASENAME}.8mm.modulated.wm.mnc")}"
+    multi   "minccalc -clobber -verbose  -expression 'A[0]*log(A[1]+1)' ${branch.BASENAME}.4mm.csf.mnc ${branch.BASENAME}.4mm.det_blur.mnc ${output("${branch.BASENAME}.4mm.modulated.log.csf.mnc")}",
+            "minccalc -clobber -verbose  -expression 'A[0]*log(A[1]+1)' ${branch.BASENAME}.4mm.gm.mnc ${branch.BASENAME}.4mm.det_blur.mnc ${output("${branch.BASENAME}.4mm.modulated.log.gm.mnc")}",
+            "minccalc -clobber -verbose  -expression 'A[0]*log(A[1]+1)' ${branch.BASENAME}.4mm.wm.mnc ${branch.BASENAME}.4mm.det_blur.mnc ${output("${branch.BASENAME}.4mm.modulated.log.wm.mnc")}",
+            "minccalc -clobber -verbose  -expression 'A[0]*log(A[1]+1)' ${branch.BASENAME}.8mm.csf.mnc ${branch.BASENAME}.8mm.det_blur.mnc ${output("${branch.BASENAME}.8mm.modulated.log.csf.mnc")}",
+            "minccalc -clobber -verbose  -expression 'A[0]*log(A[1]+1)' ${branch.BASENAME}.8mm.gm.mnc ${branch.BASENAME}.8mm.det_blur.mnc ${output("${branch.BASENAME}.8mm.modulated.log.gm.mnc")}",
+            "minccalc -clobber -verbose  -expression 'A[0]*log(A[1]+1)' ${branch.BASENAME}.8mm.wm.mnc ${branch.BASENAME}.8mm.det_blur.mnc ${output("${branch.BASENAME}.8mm.modulated.log.wm.mnc")}"
+}
+
+resamplevbm = {
+    //Resamples classified blurred brains to MNI space
+    branch.BASE="$output.mnc.prefix"
+    multi "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.csf.mnc ${output("${branch.BASE}.4mm.modulated.csf.mnc")}",
+          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.gm.mnc ${output("${branch.BASE}.4mm.modulated.gm.mnc")}",
+          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.wm.mnc ${output("${branch.BASE}.4mm.modulated.wm.mnc")}"
+    multi "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.csf.mnc ${output("${branch.BASE}.8mm.modulated.csf.mnc")}", 
+          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.gm.mnc ${output("${branch.BASE}.8mm.modulated.gm.mnc")}",
+          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.wm.mnc ${output("${branch.BASE}.8mm.modulated.wm.mnc")}"
+    multi "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.log.csf.mnc ${output("${branch.BASE}.4mm.modulated.log.csf.mnc")}",
+          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.log.gm.mnc ${output("${branch.BASE}.4mm.modulated.log.gm.mnc")}",
+          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.log.wm.mnc ${output("${branch.BASE}.4mm.modulated.log.wm.mnc")}" 
+    multi "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.log.csf.mnc ${output("${branch.BASE}.8mm.modulated.log.csf.mnc")}",
+          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.log.gm.mnc ${output("${branch.BASE}.8mm.modulated.log.gm.mnc")}",
+          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.log.wm.mnc ${output("${branch.BASE}.8mm.modulated.log.wm.mnc")}"
+
 }
 
 linear_register = segment {
