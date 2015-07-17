@@ -84,6 +84,19 @@ n4correct = {
     """
 }
 
+n4correctsimple = {
+    branch.name = "${branch.name}.n4correct"
+    //Runs the improved n3correct aka N4correct
+    //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
+    //Requires ANTs as it uses ANTs/ITK's implementation, as minc-toolkit's is buggy
+    //ANTs must be loaded after minc-toolkit to override the minc-toolkit version
+    //Simple n4 done without a mask for when bestlinreg in n4correct fails badly
+    exec """
+    N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -i $input.mnc -o $output.mnc
+    """
+}
+
+
 dumb_normalize = {
     //Performs a dumb normalization of the data, throwing away top and bottom 1%
     //Data is then scaled 0-65535 and stored in a sensible unsigned int format
