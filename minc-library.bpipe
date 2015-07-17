@@ -76,7 +76,7 @@ n4correct = {
     exec """
     tmpdir=`mktemp -d`;
     N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -i $input.mnc -o \$tmpdir/0.mnc;
-    bestlinreg.pl -lsq12 ${REGISTRATIONMODEL} $input.mnc \$tmpdir/0.xfm;
+    bestlinreg.pl -lsq12 ${REGISTRATIONMODEL} \$tmpdir/0.mnc \$tmpdir/0.xfm;
     mincresample -clobber -keep -near -like $input.mnc -transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/mask.mnc;
     N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -w \$tmpdir/mask.mnc -i $input.mnc -o $output.mnc;
     sleep 10;
