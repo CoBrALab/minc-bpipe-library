@@ -1,8 +1,0 @@
-module purge
-module use -a /project/m/mchakrav/quarantine/modules
-module load quarantine
-module load gcc/4.9.0
-module load intel/15.0.2
-module load git/1.9.5 nano/2.2.4 gnu-parallel/20140622 mesa/7.11 python/2.7.8 extras/64_6.4 Xlibraries/X11-64 ImageMagick/6.9.1-4 minc-toolkit/1.9.10 pyminc/0.41
-module load bpipe
-
