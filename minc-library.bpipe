@@ -404,7 +404,6 @@ resample = {
 
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
-	//is denoise + n3 or n4 + normalize + beast or cutneck + resample
-	anlm_denoise + n4correct
+	anlm_denoise + n4correct + linear_antsRegistration + cutneckapplyautocrop + beast
 }
 
