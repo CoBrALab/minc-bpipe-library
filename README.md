@@ -20,6 +20,8 @@ Stage options have been chosen based on best pratices from publications where ap
 
 Once you have defined your stages, you can run your pipeline on the SGE cluster with:
 ```
+> git clone https://github.com/CobraLab/minc-bpipe-library.git
+#Edit minc-bpipe-library/pipeline.bpipe as you see fit
 > module load bpipe #needed to run bpipe
 > module load minc-toolkit/1.9.10 #needed for most stages
 #Choose n to be the smaller of (number of input files, 240)
