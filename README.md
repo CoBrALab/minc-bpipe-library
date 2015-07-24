@@ -21,8 +21,7 @@ Stage options have been chosen based on best pratices from publications where ap
 Once you have defined your stages, you can run your pipeline on the SGE cluster with:
 ```
 > module load bpipe #needed to run bpipe
-> module load minc-toolkit/1.0.04 #needed for most stages
-> module load ANTs/2.1.0 #Needed for n4correct
+> module load minc-toolkit/1.9.10 #needed for most stages
 #Choose n to be the smaller of (number of input files, 240)
 > bpipe run -n<number> -d /path/to/store/outputs /path/to/pipeline.bpipe /path/to/inputs/*mnc
 ```
