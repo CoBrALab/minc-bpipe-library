@@ -13,14 +13,14 @@ DEFACEMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm15
 //t1, t2, or pd
 //Models older than icbm_2009c are also available, see resources directory
 //Choice of model affects MNI_register, cutneck, and deface
-REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
+REGISTRATIONMODEL="/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
 //REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t1_tal_nlin_asym_09c.mnc"
 //REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
 //REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
 
 //Mask for masked registration
-REGISTRATIONBRAINMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
-REGISTRATIONHEADMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_headmask.mnc"
+REGISTRATIONBRAINMASK="/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
+REGISTRATIONHEADMASK="/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_headmask.mnc"
 
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
@@ -409,6 +409,6 @@ resample = {
 
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
-	anlm_denoise + n4correct + linear_antsRegistration + cutneckapplyautocrop + beast
+	mincconvert + n4correct + linear_antsRegistration + cutneckapplyautocrop
 }
 
