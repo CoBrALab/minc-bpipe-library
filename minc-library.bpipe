@@ -167,8 +167,6 @@ cutneckapplyautocrop = {
     //Alternative implementation of cutneck which applies via autocrop in native space
     //Applies model mask to subject brain in model space
 
-    forward output.mnc
-
     //Transforms model mask to native space
     exec """
     mincresample -verbose -clobber -2 -short -unsigned -near -keep
