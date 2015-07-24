@@ -166,9 +166,6 @@ cutneckapply = {
 cutneckapplyautocrop = {
     //Alternative implementation of cutneck which applies via autocrop in native space
     //Applies model mask to subject brain in model space
-    exec """
-    minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${CUTNECKMODEL}_headmask.mnc $input.mnc $output.mnc
-    """
 
     forward output.mnc
 
