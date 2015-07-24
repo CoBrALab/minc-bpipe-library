@@ -43,4 +43,4 @@ Steps
 2. ``sed -i 's#/opt/quarantine#/project/m/mchakrav/quarantine#g' minc-library.bpipe``
 3. ``module load scinet``
 4. Use ``bpipe-batch.sh /path/to/pipeline.bpipe <list of files> > joblist`` to generate a joblist
-5. Use ``qbatch joblist 1 48:00:00`` to submit jobs to scinet queing system
+5. Use ``qbatch joblist 1 12:00:00`` to submit jobs to scinet queing system
