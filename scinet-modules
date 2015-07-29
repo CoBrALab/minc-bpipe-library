@@ -1,8 +1,0 @@
-module purge
-module use -a /project/m/mchakrav/quarantine/modules
-module load quarantine
-module load gcc/4.9.0 intel/15.0.2 gnu-parallel openmpi/intel/1.6.4 fftw/3.3.4-intel-openmpi Xlibraries/X11-64 mesa/7.11 gsl/1.16-intel ImageMagick/6.9.1-4 java
-module load minc-toolkit/git
-module load ANTs
-module load bpipe
-

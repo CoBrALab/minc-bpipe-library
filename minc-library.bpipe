@@ -75,14 +75,32 @@ n4correct = {
     //Correction is done with a mask as per http://dx.doi.org/10.1016/j.neuroimage.2007.10.026
     exec """
     tmpdir=`mktemp -d`;
-    N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -i $input.mnc -o \$tmpdir/0.mnc;
-    bestlinreg.pl -lsq12 ${REGISTRATIONMODEL} $input.mnc \$tmpdir/0.xfm;
+    N4BiasFieldCorrection -d 3 --verbose -r -b [200] -c [200x200x200x200] -t [0.05,0.01,200] -i $input.mnc -o \$tmpdir/0.mnc;
+    antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --minc --write-composite-transform --verbose
+    --output \$tmpdir/0
+    --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
+    --initial-moving-transform [${REGISTRATIONMODEL},\$tmpdir/0.mnc,1]
+    --transform Rigid[0.2] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.25] --convergence [2000x2000x2000x0,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox
+    --transform Affine[0.5] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.30] --convergence [2000x2000x2000x2000x2000,1e-6,10] --shrink-factors 8x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox;
     mincresample -clobber -keep -near -like $input.mnc -transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/mask.mnc;
-    N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -w \$tmpdir/mask.mnc -i $input.mnc -o $output.mnc;
+    N4BiasFieldCorrection -d 3 --verbose -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -w \$tmpdir/mask.mnc -i $input.mnc -o $output.mnc;
     sleep 10;
     rm -r \$tmpdir
     """
 }
+
+n4correctsimple = {
+    branch.name = "${branch.name}.n4correct"
+    //Runs the improved n3correct aka N4correct
+    //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
+    //Requires ANTs as it uses ANTs/ITK's implementation, as minc-toolkit's is buggy
+    //ANTs must be loaded after minc-toolkit to override the minc-toolkit version
+    //Simple n4 done without a mask for when bestlinreg in n4correct fails badly
+    exec """
+    N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -i $input.mnc -o $output.mnc
+    """
+}
+
 
 dumb_normalize = {
     //Performs a dumb normalization of the data, throwing away top and bottom 1%
@@ -162,7 +180,7 @@ cutneckapplyautocrop = {
     ${CUTNECKMODEL}_headmask.mnc ${output("${branch.name}.headmask.mnc")}
     """
 
-    //Applies mask to subject brain in native space
+    //Applies mask to subject brain bounding box
     exec """
     autocrop -clobber -short -bbox ${output("${branch.name}.headmask.mnc")} -extend 5,5 5,5 0,5 ${nativemnc} ${output("${branch.name}.cutneckapplyautocrop.mnc")}
     """
@@ -264,6 +282,28 @@ nonlinear_register = {
 
     forward input.mnc
     branch.nonlintransform = "${output.xfm.prefix}_inverse.xfm"
+}
+
+linear_antsRegistration = {
+    //Multi-stage registration of input brain to model space
+    branch.nativemnc = "$input.mnc"
+    exec """
+    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
+    antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --minc --write-composite-transform --verbose
+    --output $output.xfm.prefix
+    --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
+    --initial-moving-transform [${REGISTRATIONMODEL},$input.mnc,1]
+    --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.25] --convergence [2000x2000x2000x0x0,1e-6,10] --shrink-factors 12x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
+    --transform Affine[0.5] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.50] --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 8x6x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
+    --transform Affine[0.1] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,64,Random,0.50] --convergence [2000x2000x2000,1e-7,20] --shrink-factors 4x2x1 --smoothing-sigmas 2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL]
+    """
+
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned -sinc
+    -like ${REGISTRATIONMODEL}
+    -transform ${output.xfm.prefix}_inverse.xfm
+    $input.mnc $output.mnc
+    """
 }
 
 beastnormalize = {
@@ -382,7 +422,7 @@ beast = segment {
     //Requires minc-toolkit
     //Now registers the brain to MNI space first using mincANTS
     //http://www.ncbi.nlm.nih.gov/pubmed/21945694
-    linear_register + beastnormalize + beastmask + beastextract
+    beastnormalize + beastmask + beastextract
 }
 
 VBM = segment {
@@ -435,7 +475,6 @@ resample = {
 
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
-	//is denoise + n3 or n4 + normalize + beast or cutneck + resample
-	anlm_denoise + n4correct
+	anlm_denoise + n4correct + linear_antsRegistration + cutneckapplyautocrop + beast
 }
 

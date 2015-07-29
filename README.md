@@ -7,20 +7,23 @@ It requires http://www.bic.mni.mcgill.ca/ServicesSoftware/ServicesSoftwareMincTo
 
 To control which stages are run, edit ``pipeline.bpipe`` and add stage names using "+" to the "run" stage.
 
+The default in ``pipeline.bpipe`` is what has experimentally determined to be a best-practice run.
+
 Stages are listed in the ``minc-library.bpipe``, correction stages such as denoising, n3 and n4, and normalize
-should be run before any other stages. Typically after this ``linear_register`` would be run, which will
-allow other processing such as VBM, cutneck, deface and beast.
+should be run before any other stages. Typically after this ``linear_antsRegistration`` would be run, which will
+allow other processing such as VBM, cutneck, deface and beast to be done in MNI space.
 
 For convenience, "segments" have been defined for some processing jobs (beast, cutneck, VBM) which are multi-step.
-These will conflict with each other if you try to combine them, so instead you must specifiy their individual stages.
+These may conflict with each other if you try to combine them, so instead you must specifiy their individual stages.
 
 Stage options have been chosen based on best pratices from publications where applicable but can be changed.
 
 Once you have defined your stages, you can run your pipeline on the SGE cluster with:
 ```
+> git clone https://github.com/CobraLab/minc-bpipe-library.git
+#Edit minc-bpipe-library/pipeline.bpipe as you see fit
 > module load bpipe #needed to run bpipe
-> module load minc-toolkit/1.0.04 #needed for most stages
-> module load ANTs/2.1.0 #Needed for n4correct
+> module load minc-toolkit/1.9.10 #needed for most stages
 #Choose n to be the smaller of (number of input files, 240)
 > bpipe run -n<number> -d /path/to/store/outputs /path/to/pipeline.bpipe /path/to/inputs/*mnc
 ```
@@ -37,8 +40,9 @@ as local bpipe jobs on scinet nodes
 
 Steps
 
-1. ``rm bpipe.config``
-2. ``sed -i 's#/opt/quarantine#/project/m/mchakrav/quarantine#g' minc-library.bpipe``
-3. ``source scinet-modules`` #This wipes out your existing module setup for this session!
-4. Use ``bpipe-batch.sh /path/to/pipeline.bpipe <list of files> > joblist`` to generate a joblist
-5. Use ``qbatch joblist 1 48:00:00`` to submit jobs to scinet queing system
+1. ``git clone https://github.com/CobraLab/minc-bpipe-library.git``
+2. ``rm minc-bpipe-library/bpipe.config``
+3. ``sed -i 's#/opt/quarantine#/project/m/mchakrav/quarantine#g' minc-bpipe-library/minc-library.bpipe``
+4. ``module load scinet``
+5. Use ``bpipe-batch.sh /path/to/pipeline.bpipe <list of files> > joblist`` to generate a joblist
+6. Use ``qbatch joblist 1 12:00:00`` to submit jobs to scinet queing system
