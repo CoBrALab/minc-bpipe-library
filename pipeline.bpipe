@@ -1,6 +1,6 @@
 load "minc-library.bpipe"
 
 run {
- "%.mnc" * [minc_anlm + n4correct + linear_antsRegistration + nonlinear_register + cutneckapplyautocrop + beastnormalize + beastmask + beastextract + classify_clean + extractvbm + resamplevbm]
+ "%.mnc" * [anlm_denoise + n4correct + linear_antsRegistration + nonlinear_register + cutneckapplyautocrop + beastnormalize + beastmask + beastextract + classify_clean + extractvbm + resamplevbm]
 }
 
