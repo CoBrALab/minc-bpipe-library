@@ -13,7 +13,7 @@ DEFACEMODEL="/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
 //t1, t2, or pd
 //Models older than icbm_2009c are also available, see resources directory
 //Choice of model affects MNI_register, cutneck, and deface
-REGISTRATIONMODEL="/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
+REGISTRATIONMODEL="/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
 //REGISTRATIONMODEL="/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t1_tal_nlin_asym_09c.mnc"
 //REGISTRATIONMODEL="/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
 //REGISTRATIONMODEL="/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
