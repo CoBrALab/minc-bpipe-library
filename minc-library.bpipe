@@ -82,8 +82,8 @@ n4correct = {
     --initial-moving-transform [${REGISTRATIONMODEL},\$tmpdir/0.mnc,1]
     --transform Rigid[0.2] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.25] --convergence [2000x2000x2000x0,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox
     --transform Affine[0.5] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.30] --convergence [2000x2000x2000x2000x2000,1e-6,10] --shrink-factors 8x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox;
-    mincresample -clobber -keep -near -like $input.mnc -transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/mask.mnc;
-    N4BiasFieldCorrection -d 3 --verbose -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -w \$tmpdir/mask.mnc -i $input.mnc -o $output.mnc;
+    mincresample -clobber -keep -near -like \$tmpdir/0.mnc -transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/mask.mnc;
+    N4BiasFieldCorrection -d 3 --verbose -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -w \$tmpdir/mask.mnc -i \$tmpdir/0.mnc -o $output.mnc;
     sleep 10;
     rm -r \$tmpdir
     """
