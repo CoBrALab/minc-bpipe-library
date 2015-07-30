@@ -1,32 +1,32 @@
-BEASTMODEL_DIR="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2"
+BEASTMODEL_DIR="/mni_icbm152_nlin_sym_09c_minc2"
 BEASTMODEL_NAME="mni_icbm152_t1_tal_nlin_sym_09c"
-BEASTLIBRARY_DIR="/opt/quarantine/resources/BEaST_libraries/combined"
+BEASTLIBRARY_DIR="/BEaST_libraries/combined"
 
 //Model which has a headmask, must correspond to the same space as MNIMODEL
 CUTNECKMODEL="/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
 
 //Model which has a facemask, must correspond to the same space as MNIMODEL
-DEFACEMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
+DEFACEMODEL="/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
 
 //Specify target linear registration model here options are
 //sym or asym
 //t1, t2, or pd
 //Models older than icbm_2009c are also available, see resources directory
 //Choice of model affects MNI_register, cutneck, and deface
-REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
-//REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t1_tal_nlin_asym_09c.mnc"
-//REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
-//REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
+REGISTRATIONMODEL="/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
+//REGISTRATIONMODEL="/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t1_tal_nlin_asym_09c.mnc"
+//REGISTRATIONMODEL="/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
+//REGISTRATIONMODEL="/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
 
 //Mask for masked registration
-REGISTRATIONBRAINMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
-REGISTRATIONHEADMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_headmask.mnc"
+REGISTRATIONBRAINMASK="/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
+REGISTRATIONHEADMASK="/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_headmask.mnc"
 
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
 
 //Tagfile for VBM statistics
-VBMTAGDIR="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2"
+VBMTAGDIR="/mni_icbm152_nlin_sym_09c_minc2"
 VBMTAGFILE="mni_icbm152_t1_tal_nlin_sym_09c_ntags_1000_prob_90_nobg.tag"
 VBMBGTAGFILE="mni_icbm152_t1_tal_nlin_sym_09c_ntags_1000_bg.tag"
 
