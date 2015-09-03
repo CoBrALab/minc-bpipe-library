@@ -283,6 +283,31 @@ linear_antsRegistration = {
     """
 }
 
+resample_to_lsq6_space = {
+    //Must be run as the last stage, resamples all the useful files (brains and masks) to lsq6 space with the target model
+    output.dir="lsq6"
+
+    //Clever descale command, extract the scale and shear values from lsq12 registration, invert, and apply to lsq12, result is a lsq6 which is pretty nice
+    exec """
+    tmpdir=`mktemp -d`;
+    param2xfm \$(xfm2param ${branch.name}.linear_antsRegistration_inverse.xfm | grep -E 'scale|shear') \$tmpdir/${branch.name}.scale.xfm;
+    xfminvert \$tmpdir/${branch.name}.scale.xfm \$tmpdir/${branch.name}.unscale.xfm;
+    xfmconcat ${branch.name}.linear_antsRegistration_inverse.xfm \$tmpdir/${branch.name}.unscale.xfm ${output("${branch.name}.lsq6.xfm")}
+    """
+    exec """
+    mincresample -verbose -clobber -2 -short -unsigned -sinc
+    -like ${REGISTRATIONMODEL}
+    -transform ${output("${branch.name}.lsq6.xfm")}
+    ${branch.name}.cutneckapplyautocrop.mnc ${output("${branch.name}.cutneckapplyautocrop.lsq6.mnc")}
+    """
+    exec """
+    mincresample -verbose -clobber -2 -byte -unsigned -near -keep
+    -like ${REGISTRATIONMODEL}
+    -transform ${output("${branch.name}.lsq6.xfm")}
+    ${branch.name}.beastmask.mnc ${output("${branch.name}.beastmask.lsq6.mnc")}
+    """
+}
+
 beastnormalize = {
     //Linearly scales the intensities to the range [0;100] using 0.1%-99.9%
     //of the voxels in the intensity histogram
@@ -409,6 +434,6 @@ resample = {
 
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
-	anlm_denoise + n4correct + linear_antsRegistration + cutneckapplyautocrop + beast
+	anlm_denoise + n4correct + linear_antsRegistration + cutneckapplyautocrop + beast + resample_to_lsq6_space
 }
 
