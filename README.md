@@ -24,8 +24,9 @@ Once you have defined your stages, you can run your pipeline on the SGE cluster 
 #Edit minc-bpipe-library/pipeline.bpipe as you see fit
 > module load bpipe #needed to run bpipe
 > module load minc-toolkit/1.9.10 #needed for most stages
+> cd /path/to/store/outputs
 #Choose n to be the smaller of (number of input files, 240)
-> bpipe run -n<number> -d /path/to/store/outputs /path/to/pipeline.bpipe /path/to/inputs/*mnc
+> bpipe run -n<number> /path/to/pipeline.bpipe /path/to/inputs/*mnc
 ```
 
 Output filenames from bpipe will be of the form ``<inputname>.stage1.stage2.stage3.ext`` where the last stage
