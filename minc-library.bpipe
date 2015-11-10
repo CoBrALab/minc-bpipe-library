@@ -150,9 +150,9 @@ cutneckapply = {
 
     //Transforms model mask to native space
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -near -keep
-    -like ${nativemnc}
-    -transform $input.xfm
+    itk_resample --clobber --label
+    --like ${nativemnc}
+    --transform $input.xfm
     ${CUTNECKMODEL}_headmask.mnc ${output("${branch.name}.headmask.mnc")}
     """
 
@@ -173,10 +173,10 @@ cutneckapplyautocrop = {
 
     //Transforms model mask to native space
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -near -keep
-    -like ${nativemnc}
-    -transform $input.xfm
-    ${CUTNECKMODEL}_headmask.mnc ${output("${branch.name}.headmask.mnc")}
+    itk_resample --clobber --label
+    --like ${nativemnc}
+    --transform $input.xfm
+    ${CUTNECKMODEL}_headmask_D.mnc ${output("${branch.name}.headmask.mnc")}
     """
 
     //Applies mask to subject brain bounding box
@@ -275,9 +275,9 @@ linear_antsRegistration = {
     """
 
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -sinc
-    -like ${REGISTRATIONMODEL}
-    -transform ${output.xfm.prefix}_inverse.xfm
+    itk_resample --clobber --short
+    --like ${REGISTRATIONMODEL}
+    --transform ${output.xfm.prefix}_inverse.xfm
     $input.mnc $output.mnc
     """
 }
@@ -294,15 +294,15 @@ resample_to_lsq6_space = {
     xfmconcat ${branch.name}.linear_antsRegistration_inverse.xfm \$tmpdir/${branch.name}.unscale.xfm ${output("${branch.name}.lsq6.xfm")}
     """
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -sinc
-    -like ${REGISTRATIONMODEL}
-    -transform ${output("${branch.name}.lsq6.xfm")}
+    itk_resample --clobber --short
+    --like ${REGISTRATIONMODEL}
+    --transform ${output("${branch.name}.lsq6.xfm")}
     ${branch.name}.cutneckapplyautocrop.mnc ${output("${branch.name}.cutneckapplyautocrop.lsq6.mnc")}
     """
     exec """
-    mincresample -verbose -clobber -2 -byte -unsigned -near -keep
-    -like ${REGISTRATIONMODEL}
-    -transform ${output("${branch.name}.lsq6.xfm")}
+    itk_resample --clobber --labels --byte
+    --like ${REGISTRATIONMODEL}
+    --transform ${output("${branch.name}.lsq6.xfm")}
     ${branch.name}.beastmask.mnc ${output("${branch.name}.beastmask.lsq6.mnc")}
     """
 }
@@ -334,9 +334,9 @@ beastextract = {
 
     //Transform brain mask to native space
     exec """
-    mincresample -verbose -clobber -2 -byte -unsigned -near -keep
-    -like ${nativemnc}
-    -transform $input.xfm
+    itk_resample --clobber --label
+    --like ${nativemnc}
+    --transform $input.xfm
     $input.mnc ${output("${branch.name}.beastmask.mnc")}
     """
 
@@ -395,9 +395,9 @@ defaceapply = {
     """
 
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -near -keep
-    -like ${nativemnc}
-    -transform $input.xfm
+    itk_resample --clobber --label
+    --like ${nativemnc}
+    --transform $input.xfm
     ${DEFACEMODEL}_face_mask_res.mnc ${output("${branch.name}.facemask.mnc")}
     """
 
