@@ -3,7 +3,7 @@ Library of bpipe functions for processing minc files
 
 minc-bpipe-library provides a set of chainable minc file processing functions to (pre)process data.
 
-It requires http://www.bic.mni.mcgill.ca/ServicesSoftware/ServicesSoftwareMincToolKit, https://stnava.github.io/ANTs/, and https://github.com/ssadedin/bpipe/
+It requires http://www.bic.mni.mcgill.ca/ServicesSoftware/ServicesSoftwareMincToolKit, and https://github.com/ssadedin/bpipe/
 
 To control which stages are run, edit ``pipeline.bpipe`` and add stage names using "+" to the "run" stage.
 
@@ -45,5 +45,6 @@ Steps
 2. ``rm minc-bpipe-library/bpipe.config``
 3. ``sed -i 's#/opt/quarantine#/project/m/mchakrav/quarantine#g' minc-bpipe-library/minc-library.bpipe``
 4. ``module load scinet``
-5. Use ``bpipe-batch.sh /path/to/pipeline.bpipe <list of files> > joblist`` to generate a joblist
-6. Use ``qbatch joblist 1 12:00:00`` to submit jobs to scinet queing system
+5. ``cd /path/to/outputs``
+6. Use ``bpipe-batch.sh /path/to/pipeline.bpipe <list of files> > joblist`` to generate a joblist
+7. Use ``qbatch joblist 1 12:00:00`` to submit jobs to scinet queing system
