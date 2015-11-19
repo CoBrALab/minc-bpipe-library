@@ -22,7 +22,7 @@ REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_
 //ADNI MNI MODEL
 REGISTRATIONMODEL2="/opt/quarantine/resources/mni_adni/mni_adni_t1w_tal_nlin_asym.mnc"
 //PEDIATRIC MNI MODEL
-//REGISTRATIONMODEL2="/opt/quarantine/resources/mni_nihpd/nihpd_sym_04.5-18.5_t1w.mnc"
+//REGISTRATIONMODEL2="/opt/quarantine/resources/nihpd_sym_all_minc2/nihpd_sym_04.5-18.5_t1w.mnc"
 
 //Mask for masked registration
 REGISTRATIONBRAINMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
