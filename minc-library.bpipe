@@ -18,6 +18,12 @@ REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_
 //REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
 //REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
 
+//Optional second registration model for two-model registration
+//ADNI MNI MODEL
+REGISTRATIONMODEL2="/opt/quarantine/resources/mni_adni/mni_adni_t1w_tal_nlin_asym.mnc"
+//PEDIATRIC MNI MODEL
+//REGISTRATIONMODEL2="/opt/quarantine/resources/mni_nihpd/nihpd_sym_04.5-18.5_t1w.mnc"
+
 //Mask for masked registration
 REGISTRATIONBRAINMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
 REGISTRATIONHEADMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_headmask.mnc"
@@ -290,6 +296,38 @@ linear_antsRegistration = {
     """
 }
 
+linear_antsRegistration_twotarget = {
+    //Multi-stage registration of input brain to model space with two targets
+    branch.nativemnc = "$input.mnc"
+    uses(GB:3) {
+    exec """
+    antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --minc --write-composite-transform --verbose
+    --output $output.xfm.prefix
+    --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
+    --initial-moving-transform [${REGISTRATIONMODEL},$input.mnc,1]
+    --transform Rigid[0.5]
+    --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.3]
+    --metric Mattes[${REGISTRATIONMODEL2},$input.mnc,1,32,Random,0.3]
+    --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 16x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
+    --transform Affine[0.5]
+    --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.5]
+    --metric Mattes[${REGISTRATIONMODEL2},$input.mnc,1,32,Random,0.5]
+    --convergence [2000x2000x2000x2000x2000,1e-6,10] --shrink-factors 16x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
+    --transform Affine[0.1]
+    --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,64,Random,0.5]
+    --metric Mattes[${REGISTRATIONMODEL2},$input.mnc,1,64,Random,0.5]
+    --convergence [2000x2000x2000,1e-6,10] --shrink-factors 4x2x1 --smoothing-sigmas 2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL]
+    """
+    }
+
+    exec """
+    itk_resample --clobber --short
+    --like ${REGISTRATIONMODEL}
+    --transform ${output.xfm.prefix}_inverse.xfm
+    $input.mnc $output.mnc
+    """
+}
+
 resample_to_lsq6_space = {
     //Must be run as the last stage, resamples all the useful files (brains and masks) to lsq6 space with the target model
     output.dir="lsq6"
@@ -297,9 +335,9 @@ resample_to_lsq6_space = {
     //Clever descale command, extract the scale and shear values from lsq12 registration, invert, and apply to lsq12, result is a lsq6 which is pretty nice
     exec """
     tmpdir=`mktemp -d`;
-    param2xfm \$(xfm2param ${branch.name}.linear_antsRegistration_inverse.xfm | grep -E 'scale|shear') \$tmpdir/${branch.name}.scale.xfm;
+    param2xfm \$(xfm2param ${branch.name}.linear_antsRegistration*_inverse.xfm | grep -E 'scale|shear') \$tmpdir/${branch.name}.scale.xfm;
     xfminvert \$tmpdir/${branch.name}.scale.xfm \$tmpdir/${branch.name}.unscale.xfm;
-    xfmconcat ${branch.name}.linear_antsRegistration_inverse.xfm \$tmpdir/${branch.name}.unscale.xfm ${output("${branch.name}.lsq6.xfm")}
+    xfmconcat ${branch.name}.linear_antsRegistration*_inverse.xfm \$tmpdir/${branch.name}.unscale.xfm ${output("${branch.name}.lsq6.xfm")}
     """
     exec """
     itk_resample --clobber --short
@@ -443,4 +481,3 @@ preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
 	anlm_denoise + n4correct + linear_antsRegistration + cutneckapplyautocrop + beast + resample_to_lsq6_space
 }
-
