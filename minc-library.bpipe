@@ -71,21 +71,23 @@ n4correct = {
     //Runs the improved n3correct aka N4correct
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
     //Correction is done with a mask as per http://dx.doi.org/10.1016/j.neuroimage.2007.10.026
+    uses(GB:1.75) {
     exec """
     tmpdir=`mktemp -d`;
+
     N4BiasFieldCorrection -d 3 -i $input.mnc -o \$tmpdir/0.mnc;
 
     antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --write-composite-transform --minc
     --output \$tmpdir/0
     --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
     --initial-moving-transform [${REGISTRATIONMODEL},\$tmpdir/0.mnc,1]
-    --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.25] --convergence [2000x2000x2000x2000,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox
-    --transform Affine[0.5] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.5] --convergence [2000x2000x2000x2000x2000,1e-6,10] --shrink-factors 8x6x4x2x1 --smoothing-sigmas 4x3x2x1x0vox;
+    --transform Affine[0.5] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.3] --convergence [2000x2000x2000x2000x2000,1e-6,10] --shrink-factors 16x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox;
 
-    itk_resample --clobber --label --like \$tmpdir/0.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/weightmask.mnc;
+    itk_resample --clobber --label --like $input.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/weightmask.mnc;
 
     N4BiasFieldCorrection -d 3 -b [200] -c [200x200x200x200,0.0] -w \$tmpdir/weightmask.mnc -i $input.mnc -o $output.mnc
     """
+    }
 }
 
 n4correctsimple = {
