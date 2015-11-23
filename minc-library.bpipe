@@ -432,7 +432,7 @@ deface = segment {
 cutneck = segment {
     //Linearly registers brain to MNI space
     //Applies neckmask to MRI data
-    linear_register + cutneckapply
+    linear_register + cutneckapplyautocrop
 }
 
 resample = {
