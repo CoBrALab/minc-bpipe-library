@@ -59,11 +59,13 @@ nlm_denoise = {
 }
 
 anlm_denoise = {
+	branch.origname = "${branch.name}"
     branch.name = "${branch.name}.anlm_denoise"
-    //Runs the "improved" adaptive non local means filter
+	branch.rawmnc = "$input.mnc" 
+	//Runs the "improved" adaptive non local means filter
     //http://onlinelibrary.wiley.com/doi/10.1002/jmri.22003/full
     //Requires minc-toolkit
-    exec "minc_anlm --rician --verbose $input.mnc $output.mnc"
+    exec "minc_anlm --rician --beta 0.5 --verbose $input.mnc $output.mnc"
 }
 
 n4correct = {
@@ -86,6 +88,17 @@ n4correct = {
 
     N4BiasFieldCorrection -d 3 -b [200] -c [200x200x200x200,0.0] -w \$tmpdir/weightmask.mnc -i $input.mnc -o $output.mnc
     """
+}
+
+brain_n4correct = {
+    branch.name = "${branch.origname}.brain_n4correct"
+    //Runs the improved n3correct aka N4correct
+    //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
+    //Correction is done with a mask as per http://dx.doi.org/10.1016/j.neuroimage.2007.10.026
+    exec """
+    N4BiasFieldCorrection -d 3 -b [200] -c [200x200x200x200,0.0] -w ${branch.nativebeastmask} -i ${branch.rawmnc} -o ${output("${branch.name}.mnc")}
+    """
+	forward "${output("${branch.name}.mnc")}"
 }
 
 n4correctsimple = {
@@ -187,8 +200,19 @@ cutneckapplyautocrop = {
     exec """
     autocrop -clobber -bbox ${output("${branch.name}.cutneck.mnc")} ${output("${branch.name}.cutneck.mnc")} ${output("${branch.name}.cutneckapplyautocrop.mnc")}
     """
-
+	branch.bbox="${branch.name}.cutneckapplyautocrop.mnc"
 }
+
+nativeautocrop = {
+    //Autocrops data in native space, both the n4-raw and the beast-n4-raw
+    branch.name = "${branch.name}.nativeautocrop"
+	exec """
+    itk_resample --clobber --like ${branch.bbox} $input.mnc $output.mnc
+
+	itk_resample --clobber --like ${branch.bbox} ${branch.beastrawmnc}.mnc ${output("${branch.beastrawmnc}.nativeautocrop.mnc")}
+    """
+}
+
 
 rigid_register = {
     //Rigidly registers brain to a given model
@@ -344,11 +368,21 @@ beastextract = {
     --transform $input.xfm
     $input.mnc ${output("${branch.name}.beastmask.mnc")}
     """
+	branch.nativebeastmask="${branch.name}.beastmask.mnc"
 
     //Apply brain mask to subject brain in native space
     exec """
     minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] ${nativemnc}  ${output("${branch.name}.beastmask.mnc")} ${output("${branch.name}.beastextract.mnc")}
     """
+}
+
+nativebeastextract = {
+	//Applies the native beast mask to the input file
+	branch.beastrawmnc = "${branch.name}.nativebeastextract"
+    exec """
+    minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] ${input.mnc}  ${branch.nativebeastmask} ${output("${branch.beastrawmnc}.mnc")}
+    """
+	forward input.mnc
 }
 
 classify_clean = {
@@ -438,6 +472,6 @@ resample = {
 
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
-	anlm_denoise + n4correct + linear_antsRegistration + cutneckapplyautocrop + beast + resample_to_lsq6_space
+	anlm_denoise + n4correct + linear_antsRegistration + cutneckapplyautocrop + beast + brain_n4correct + nativebeastextract + nativeautocrop
 }
 
