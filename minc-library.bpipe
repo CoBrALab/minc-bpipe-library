@@ -156,7 +156,7 @@ cutneckapplyautocrop = {
 
     //Transforms model mask to native space
     exec """
-    itk_resample --clobber --label
+    itk_resample --clobber --labels --byte
     --like ${nativemnc}
     --transform $input.xfm
     ${CUTNECKMODEL}_headmask_D.mnc ${output("${branch.name}.headmask.mnc")}
@@ -350,7 +350,7 @@ beastextract = {
 
     //Transform brain mask to native space
     exec """
-    itk_resample --clobber --label
+    itk_resample --clobber --labels --byte
     --like ${nativemnc}
     --transform $input.xfm
     $input.mnc ${output("${branch.name}.beastmask.mnc")}
@@ -411,7 +411,7 @@ defaceapply = {
     """
 
     exec """
-    itk_resample --clobber --label
+    itk_resample --clobber --labels --byte
     --like ${nativemnc}
     --transform $input.xfm
     ${DEFACEMODEL}_face_mask_res.mnc ${output("${branch.name}.facemask.mnc")}
