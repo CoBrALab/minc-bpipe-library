@@ -170,7 +170,8 @@ cutneckapplyautocrop = {
     exec """
     autocrop -clobber -bbox ${output("${branch.name}.cutneck.mnc")} ${output("${branch.name}.cutneck.mnc")} ${output("${branch.name}.cutneckapplyautocrop.mnc")}
     """
-
+    branch.nativemnc = "${branch.name}.cutneckapplyautocrop.mnc"
+    branch.name = "${branch.name}.cutneckapplyautocrop"
 }
 
 rigid_register = {
@@ -305,15 +306,15 @@ resample_to_lsq6_space = {
     //Clever descale command, extract the scale and shear values from lsq12 registration, invert, and apply to lsq12, result is a lsq6 which is pretty nice
     exec """
     tmpdir=`mktemp -d`;
-    param2xfm \$(xfm2param ${branch.name}.linear_antsRegistration*_inverse.xfm | grep -E 'scale|shear') \$tmpdir/${branch.name}.scale.xfm;
+    param2xfm \$(xfm2param ${input.xfm.prefix}_inverse.xfm | grep -E 'scale|shear') \$tmpdir/${branch.name}.scale.xfm;
     xfminvert \$tmpdir/${branch.name}.scale.xfm \$tmpdir/${branch.name}.unscale.xfm;
-    xfmconcat ${branch.name}.linear_antsRegistration*_inverse.xfm \$tmpdir/${branch.name}.unscale.xfm ${output("${branch.name}.lsq6.xfm")}
+    xfmconcat ${input.xfm.prefix}_inverse.xfm \$tmpdir/${branch.name}.unscale.xfm ${output("${branch.name}.lsq6.xfm")}
     """
     exec """
     itk_resample --clobber --short
     --like ${REGISTRATIONMODEL}
     --transform ${output("${branch.name}.lsq6.xfm")}
-    ${branch.name}.cutneckapplyautocrop.mnc ${output("${branch.name}.cutneckapplyautocrop.lsq6.mnc")}
+    ${branch.name}.mnc ${output("${branch.name}.lsq6.mnc")}
     """
     exec """
     itk_resample --clobber --labels --byte
