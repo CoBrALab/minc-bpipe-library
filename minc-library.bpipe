@@ -81,7 +81,7 @@ n4correct = {
     exec """
     tmpdir=`mktemp -d`;
 
-    N4BiasFieldCorrection -d 3 -i $input.mnc -o \$tmpdir/0.mnc -v 1;
+    N4BiasFieldCorrection -d 3 -b [200] -i $input.mnc -o \$tmpdir/0.mnc -v 1;
 
     antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --write-composite-transform --minc --verbose
     --output \$tmpdir/0
