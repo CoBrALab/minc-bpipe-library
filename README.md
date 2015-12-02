@@ -48,3 +48,12 @@ Steps
 5. ``cd /path/to/outputs``
 6. Use ``bpipe-batch.sh /path/to/pipeline.bpipe <list of files> > joblist`` to generate a joblist
 7. Use ``qbatch joblist 1 12:00:00`` to submit jobs to scinet queing system
+
+#QC Generation
+The script ``generate-bpipe-QC.sh`` is used to generate standardized views of the final outputs for quality control, to use:
+
+```
+#In your output directory
+> mkdir QC
+> for file in *.cutneckapplyautocrop.beastnormalize.mnc; do /path/to/minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg; done
+```
