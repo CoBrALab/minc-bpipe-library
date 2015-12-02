@@ -28,6 +28,9 @@ REGISTRATIONMODEL2="/opt/quarantine/resources/mni_adni/mni_adni_t1w_tal_nlin_asy
 REGISTRATIONBRAINMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
 REGISTRATIONHEADMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_headmask.mnc"
 
+//Mask of white matter for N4 improvement
+REGISTRATIONWMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_wm_tal_nlin_sym_09c.mnc"
+
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
 
@@ -90,7 +93,7 @@ n4correct = {
     --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.3] --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 16x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
     --transform Affine[0.1] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.3] --convergence [2000x2000x2000x2000,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL];
 
-    itk_resample --clobber --byte --labels --like $input.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/weightmask.mnc;
+    itk_resample --clobber --order 3 --like $input.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONWMMASK} \$tmpdir/weightmask.mnc;
 
     N4BiasFieldCorrection -d 3 -b [200] -c [200x200x200x200,0.0] -w \$tmpdir/weightmask.mnc -i $input.mnc -o $output.mnc -v 1
     """
