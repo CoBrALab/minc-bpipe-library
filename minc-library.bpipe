@@ -90,8 +90,8 @@ n4correct = {
     --output \$tmpdir/0
     --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
     --initial-moving-transform [${REGISTRATIONMODEL},\$tmpdir/0.mnc,1]
-    --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.3] --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 16x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
-    --transform Affine[0.1] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.3] --convergence [2000x2000x2000x2000,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL];
+    --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.5] --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 10x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox
+    --transform Affine[0.1] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.5] --convergence [2000x2000x2000x2000,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 4x2x1x0vox;
 
     itk_resample --clobber --order 3 --like $input.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONWMMASK} \$tmpdir/weightmask.mnc;
 
@@ -261,8 +261,8 @@ linear_antsRegistration = {
     --output $output.xfm.prefix
     --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
     --initial-moving-transform [${REGISTRATIONMODEL},$input.mnc,1]
-    --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.3] --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 16x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
-    --transform Affine[0.1] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,64] --convergence [2000x2000x2000x2000,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL]
+    --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.3] --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 10x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
+    --transform Affine[0.1] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,64] --convergence [2000x2000x2000x2000,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 4x2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL]
     """
     }
 
@@ -286,11 +286,11 @@ linear_antsRegistration_twotarget = {
     --transform Rigid[0.5]
     --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.3]
     --metric Mattes[${REGISTRATIONMODEL2},$input.mnc,1,32,Random,0.3]
-    --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 16x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
+    --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 10x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
     --transform Affine[0.1]
     --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,64,Random,0.5]
     --metric Mattes[${REGISTRATIONMODEL2},$input.mnc,1,64,Random,0.5]
-    --convergence [2000x2000x2000x2000,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL]
+    --convergence [2000x2000x2000x2000,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 4x2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL]
     """
     }
 
