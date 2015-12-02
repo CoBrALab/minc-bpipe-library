@@ -267,7 +267,7 @@ linear_antsRegistration = {
     }
 
     exec """
-    itk_resample --clobber --short
+    itk_resample --clobber --order 3 --short
     --like ${REGISTRATIONMODEL}
     --transform ${output.xfm.prefix}_inverse.xfm
     $input.mnc $output.mnc
@@ -295,7 +295,7 @@ linear_antsRegistration_twotarget = {
     }
 
     exec """
-    itk_resample --clobber --short
+    itk_resample --clobber --order 3 --short
     --like ${REGISTRATIONMODEL}
     --transform ${output.xfm.prefix}_inverse.xfm
     $input.mnc $output.mnc
@@ -314,7 +314,7 @@ resample_to_lsq6_space = {
     xfmconcat ${input.xfm.prefix}_inverse.xfm \$tmpdir/${branch.name}.unscale.xfm ${output("${branch.name}.lsq6.xfm")}
     """
     exec """
-    itk_resample --clobber --short
+    itk_resample --clobber --order 3 --short
     --like ${REGISTRATIONMODEL}
     --transform ${output("${branch.name}.lsq6.xfm")}
     ${branch.name}.mnc ${output("${branch.name}.lsq6.mnc")}
