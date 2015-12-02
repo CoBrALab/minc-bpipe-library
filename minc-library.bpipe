@@ -18,9 +18,14 @@ REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_
 //REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
 //REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
 
+REGISTRATIONMODEL2="/opt/quarantine/resources/mni_adni/mni_adni_t1w_tal_nlin_asym.mnc"
+
 //Mask for masked registration
 REGISTRATIONBRAINMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
 REGISTRATIONHEADMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_headmask.mnc"
+
+//Mask of white matter for N4 improvement
+REGISTRATIONWMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_wm_tal_nlin_sym_09c.mnc"
 
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
@@ -70,24 +75,27 @@ n4correct = {
     branch.name = "${branch.name}.n4correct"
     //Runs the improved n3correct aka N4correct
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
-    //Requires ANTs as it uses ANTs/ITK's implementation, as minc-toolkit's is buggy
-    //ANTs must be loaded after minc-toolkit to override the minc-toolkit version
     //Correction is done with a mask as per http://dx.doi.org/10.1016/j.neuroimage.2007.10.026
+    uses(GB:1.75) {
     exec """
     tmpdir=`mktemp -d`;
-    N4BiasFieldCorrection -d 3 --verbose -r -b [200] -c [200x200x200x200] -t [0.05,0.01,200] -i $input.mnc -o \$tmpdir/0.mnc;
-    antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --minc --write-composite-transform --verbose
+
+    N4BiasFieldCorrection -d 3 -b [200] -i $input.mnc -o \$tmpdir/0.mnc -v 1;
+
+    antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --write-composite-transform --minc --verbose
     --output \$tmpdir/0
     --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
     --initial-moving-transform [${REGISTRATIONMODEL},\$tmpdir/0.mnc,1]
-    --transform Rigid[0.2] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.25] --convergence [2000x2000x2000x0,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 3x2x1x0vox
-    --transform Affine[0.5] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.30] --convergence [2000x2000x2000x2000x2000,1e-6,10] --shrink-factors 8x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox;
-    mincresample -clobber -keep -near -like \$tmpdir/0.mnc -transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/mask.mnc;
-    N4BiasFieldCorrection -d 3 --verbose -r -b [200] -c [200x200x200x200,0.0] -t [0.05,0.01,200] -w \$tmpdir/mask.mnc -i \$tmpdir/0.mnc -o $output.mnc;
-    sleep 10;
-    rm -r \$tmpdir
+    --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.3] --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 10x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox
+    --transform Affine[0.1] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.3] --convergence [2000x2000x2000x2000x2000,1e-6,10] --shrink-factors 10x8x4x2x1 --smoothing-sigmas 6x4x2x1x0vox;
+
+    itk_resample --clobber --order 3 --like $input.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONWMMASK} \$tmpdir/weightmask.mnc;
+
+    N4BiasFieldCorrection -d 3 -b [200] -c [200x200x200x200,0.0] -w \$tmpdir/weightmask.mnc -i $input.mnc -o $output.mnc -v 1
     """
+    }
 }
+
 
 n4correctsimple = {
     branch.name = "${branch.name}.n4correct"
@@ -167,23 +175,29 @@ cutneckapplyautocrop = {
     //Alternative implementation of cutneck which applies via autocrop in native space
     //Applies model mask to subject brain in model space
     exec """
-    minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${CUTNECKMODEL}_headmask.mnc $input.mnc $output.mnc
+    minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${CUTNECKMODEL}_headmask_D.mnc $input.mnc $output.mnc
     """
 
     forward output.mnc
 
     //Transforms model mask to native space
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -near -keep
-    -like ${nativemnc}
-    -transform $input.xfm
-    ${CUTNECKMODEL}_headmask.mnc ${output("${branch.name}.headmask.mnc")}
+    itk_resample --clobber --labels --byte
+    --like ${nativemnc}
+    --transform $input.xfm
+    ${CUTNECKMODEL}_headmask_D.mnc ${output("${branch.name}.headmask.mnc")}
     """
 
-    //Applies mask to subject brain bounding box
     exec """
-    autocrop -clobber -short -bbox ${output("${branch.name}.headmask.mnc")} -extend 5,5 5,5 0,5 ${nativemnc} ${output("${branch.name}.cutneckapplyautocrop.mnc")}
+    minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${nativemnc} ${output("${branch.name}.headmask.mnc")} ${output("${branch.name}.cutneck.mnc")}
     """
+
+    //Applies calculates bounding box from data
+    exec """
+    autocrop -clobber -bbox ${output("${branch.name}.cutneck.mnc")} ${output("${branch.name}.cutneck.mnc")} ${output("${branch.name}.cutneckapplyautocrop.mnc")}
+    """
+    branch.nativemnc = "${branch.name}.cutneckapplyautocrop.mnc"
+    branch.name = "${branch.name}.cutneckapplyautocrop"
 }
 
 rigid_register = {
@@ -268,40 +282,39 @@ nonlinear_register = {
     //Uses brain mask for model
     //Mask must be in "fixed" space, so this registration must be setup backwards
     //Requires minc-toolkit
-    branch.nonlinmnc="$output.xfm.prefix"
+    branch.nonlinmnc="${input.mnc.prefix}.nonlinear_register"
+
     exec """
-    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=8
-    mincANTS 3 -m CC[$input.mnc,${REGISTRATIONMODEL},1,4]
-     -r Gauss[3,0]
-     -t SyN[0.5]
-     -i 100x100x100x100x20
-     -o $output.xfm
-     --use-Histogram-Matching
-     --continue-affine false
+    antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --verbose --minc
+    --output $branch.nonlinmnc
+    --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
+    --transform SyN[0.1,3,0] --metric CC[$input.mnc,${REGISTRATIONMODEL},1,6] --convergence [2000x2000x0x0x0x0,1e-6,10] --shrink-factors 20x16x8x4x2x1 --smoothing-sigmas 5x4x3x2x1x0vox --masks [NULL,NULL]
+    --transform SyN[0.1,3,0] --metric CC[$input.mnc,${REGISTRATIONMODEL},1,4] --convergence [1000x500x250x125x63,1e-6,10] --shrink-factors 16x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,${REGISTRATIONBRAINMASK}]
+    #${output("${branch.nonlinmnc}0_inverse_NL.xfm")}"
     """
 
     forward input.mnc
-    branch.nonlintransform = "${output.xfm.prefix}_inverse.xfm"
+    branch.nonlintransform = "${branch.nonlinmnc}0_inverse_NL.xfm"
 }
 
 linear_antsRegistration = {
     //Multi-stage registration of input brain to model space
     branch.nativemnc = "$input.mnc"
+    uses(GB:1.75) {
     exec """
-    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
     antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --minc --write-composite-transform --verbose
     --output $output.xfm.prefix
     --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
     --initial-moving-transform [${REGISTRATIONMODEL},$input.mnc,1]
-    --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.25] --convergence [2000x2000x2000x0x0,1e-6,10] --shrink-factors 12x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
-    --transform Affine[0.5] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.50] --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 8x6x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
-    --transform Affine[0.1] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,64,Random,0.50] --convergence [2000x2000x2000,1e-7,20] --shrink-factors 4x2x1 --smoothing-sigmas 2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL]
+    --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.5] --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 10x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
+    --transform Affine[0.1] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,64] --convergence [2000x2000x2000x2000x2000,1e-6,10] --shrink-factors 10x8x4x2x1 --smoothing-sigmas 6x4x2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL]
     """
+    }
 
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -sinc
-    -like ${REGISTRATIONMODEL}
-    -transform ${output.xfm.prefix}_inverse.xfm
+    itk_resample --clobber --order 3 --short
+    --like ${REGISTRATIONMODEL}
+    --transform ${output.xfm.prefix}_inverse.xfm
     $input.mnc $output.mnc
     """
 }
@@ -311,13 +324,13 @@ beastnormalize = {
     //of the voxels in the intensity histogram
     //No registration or n3 since this is done in prior steps
     branch.modelmnc = "$input.mnc.prefix"
-    exec "beast_normalize $input.mnc $output.mnc \$(mktemp -d)/dummy.xfm -non3 -noreg -modeldir ${BEASTMODEL_DIR} -modelname ${BEASTMODEL_NAME}"
+    exec "volume_pol --order 1 --min 0 --max 100 --noclamp  $input.mnc ${REGISTRATIONMODEL} --source_mask ${REGISTRATIONBRAINMASK} --target_mask ${REGISTRATIONBRAINMASK} --clobber $output.mnc"
 }
 
 beastmask = {
     //Generates a brain mask for subject brain in model space
-    uses(GB:9) {
-    exec "mincbeast -clobber -verbose -fill -median -same_res -flip -conf ${BEASTLIBRARY_DIR}/default.1mm.conf ${BEASTLIBRARY_DIR} $input.mnc $output.mnc"
+    uses(GB:9,threads:8) {
+    exec "mincbeast -clobber -verbose -fill -median -same_res -flip -conf ${BEASTLIBRARY_DIR}/highqual.1mm.conf ${BEASTLIBRARY_DIR} $input.mnc $output.mnc"
     }
 }
 
@@ -333,9 +346,9 @@ beastextract = {
 
     //Transform brain mask to native space
     exec """
-    mincresample -verbose -clobber -2 -byte -unsigned -near -keep
-    -like ${nativemnc}
-    -transform $input.xfm
+    itk_resample --clobber --labels --byte
+    --like ${nativemnc}
+    --transform $input.xfm
     $input.mnc ${output("${branch.name}.beastmask.mnc")}
     """
 
@@ -375,7 +388,7 @@ extractvbm = {
             "smooth_mask -clobber -binvalue 2 -fwhm 4 ${input.mnc} ${output("${branch.BASENAME}.4mm.gm.mnc")}",
             "smooth_mask -clobber -binvalue 3 -fwhm 4 ${input.mnc} ${output("${branch.BASENAME}.4mm.wm.mnc")}"
     exec """
-    mincblob -clobber -determinant ${branch.nonlinmnc}_inverse_grid_0.mnc ${output("${branch.nonlinmnc}_inverse_grid_determinant.mnc")}
+    CreateJacobianDeterminantImage 3 ${branch.nonlinmnc}0_inverse_NL_grid_0.mnc ${output("${branch.nonlinmnc}_inverse_grid_determinant.mnc")}
     """
     multi   "mincblur -clobber -verbose -fwhm 4 ${branch.nonlinmnc}_inverse_grid_determinant.mnc ${branch.BASENAME}.4mm.det #${output("${branch.BASENAME}.4mm.det_blur.mnc")}",
             "mincblur -clobber -verbose -fwhm 8 ${branch.nonlinmnc}_inverse_grid_determinant.mnc ${branch.BASENAME}.8mm.det #${output("${branch.BASENAME}.8mm.det_blur.mnc")}"
@@ -396,18 +409,18 @@ extractvbm = {
 resamplevbm = {
     //Resamples classified blurred brains to MNI space
     branch.BASE="$output.mnc.prefix"
-    multi "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.csf.mnc ${output("${branch.BASE}.4mm.modulated.csf.mnc")}",
-          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.gm.mnc ${output("${branch.BASE}.4mm.modulated.gm.mnc")}",
-          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.wm.mnc ${output("${branch.BASE}.4mm.modulated.wm.mnc")}"
-    multi "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.csf.mnc ${output("${branch.BASE}.8mm.modulated.csf.mnc")}", 
-          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.gm.mnc ${output("${branch.BASE}.8mm.modulated.gm.mnc")}",
-          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.wm.mnc ${output("${branch.BASE}.8mm.modulated.wm.mnc")}"
-    multi "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.log.csf.mnc ${output("${branch.BASE}.4mm.modulated.log.csf.mnc")}",
-          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.log.gm.mnc ${output("${branch.BASE}.4mm.modulated.log.gm.mnc")}",
-          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.4mm.modulated.log.wm.mnc ${output("${branch.BASE}.4mm.modulated.log.wm.mnc")}" 
-    multi "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.log.csf.mnc ${output("${branch.BASE}.8mm.modulated.log.csf.mnc")}",
-          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.log.gm.mnc ${output("${branch.BASE}.8mm.modulated.log.gm.mnc")}",
-          "mincresample -clobber -verbose -sinc -like ${REGISTRATIONMODEL} -transform ${branch.nonlinmnc}.xfm ${branch.extractvbmoutputs}.8mm.modulated.log.wm.mnc ${output("${branch.BASE}.8mm.modulated.log.wm.mnc")}"
+    multi "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.4mm.modulated.csf.mnc ${output("${branch.BASE}.4mm.modulated.csf.mnc")}",
+          "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.4mm.modulated.gm.mnc ${output("${branch.BASE}.4mm.modulated.gm.mnc")}",
+          "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.4mm.modulated.wm.mnc ${output("${branch.BASE}.4mm.modulated.wm.mnc")}"
+    multi "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.8mm.modulated.csf.mnc ${output("${branch.BASE}.8mm.modulated.csf.mnc")}", 
+          "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.8mm.modulated.gm.mnc ${output("${branch.BASE}.8mm.modulated.gm.mnc")}",
+          "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.8mm.modulated.wm.mnc ${output("${branch.BASE}.8mm.modulated.wm.mnc")}"
+    multi "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.4mm.modulated.log.csf.mnc ${output("${branch.BASE}.4mm.modulated.log.csf.mnc")}",
+          "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.4mm.modulated.log.gm.mnc ${output("${branch.BASE}.4mm.modulated.log.gm.mnc")}",
+          "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.4mm.modulated.log.wm.mnc ${output("${branch.BASE}.4mm.modulated.log.wm.mnc")}" 
+    multi "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.8mm.modulated.log.csf.mnc ${output("${branch.BASE}.8mm.modulated.log.csf.mnc")}",
+          "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.8mm.modulated.log.gm.mnc ${output("${branch.BASE}.8mm.modulated.log.gm.mnc")}",
+          "itk_resample --clobber --order 3 --like ${REGISTRATIONMODEL} --transform ${branch.nonlinmnc}0_NL.xfm ${branch.extractvbmoutputs}.8mm.modulated.log.wm.mnc ${output("${branch.BASE}.8mm.modulated.log.wm.mnc")}"
 
 }
 
