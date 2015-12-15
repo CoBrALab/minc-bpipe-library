@@ -63,6 +63,7 @@ nlm_denoise = {
     branch.name = "${branch.name}.nlm_denoise"
     //Runs non-local-means filter on data
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=4359947
+    //This is probably only valid for very noise 3T, or most 1.5T data
     //Requires minc-toolkit
     exec "volume_denoise.pl $input.mnc $output.mnc --verbose --clobber"
 }
@@ -71,6 +72,7 @@ anlm_denoise = {
     branch.name = "${branch.name}.anlm_denoise"
     //Runs the "improved" adaptive non local means filter
     //http://onlinelibrary.wiley.com/doi/10.1002/jmri.22003/full
+    //This is probably only valid for very noise 3T, or most 1.5T data
     //Requires minc-toolkit
     exec "minc_anlm --rician --verbose $input.mnc $output.mnc"
 }
@@ -453,5 +455,5 @@ resample = {
 
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
-	anlm_denoise + n4correct + linear_antsRegistration + cutneckapplyautocrop + beast + resample_to_lsq6_space
+	n4correct + linear_antsRegistration + cutneckapplyautocrop + beast + resample_to_lsq6_space
 }
