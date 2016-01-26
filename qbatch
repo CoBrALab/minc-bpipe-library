@@ -127,13 +127,13 @@ if __name__ == "__main__":
         script = open(scriptfile, "w")
 
         script.write("#!/bin/bash\n")
-        script.write("module use -a /project/m/mchakrav/quarantine/modules\n")
-        script.write("module load scinet\n")
 
         for opt in qsub_options:
             script.write("%s %s\n" % (qsub_option_prefix,opt))
 
         if options.batch_system == 'pbs':
+            script.write("module use -a /project/m/mchakrav/quarantine/modules\n")
+            script.write("module load scinet\n")
             script.write("cd $PBS_O_WORKDIR\n")
             script.writelines(task_list[chunk*chunk_size:chunk*chunk_size+chunk_size])
         else:
