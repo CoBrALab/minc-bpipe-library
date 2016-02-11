@@ -45,8 +45,9 @@ Steps
 2. ``rm minc-bpipe-library/bpipe.config``
 3. ``sed -i 's#/opt/quarantine#/project/m/mchakrav/quarantine#g' minc-bpipe-library/minc-library.bpipe``
 4. ``cd /path/to/outputs``
-5. Use ``/path/to/minc-bpipe-library/bpipe-batch.sh /path/to/pipeline.bpipe /path/to/my/inputs/*.mnc > joblist`` to generate a joblist
-6. Use ``/path/to/minc-bpipe-library/qbatch joblist 1 12:00:00`` to submit jobs to scinet queing system
+5. ``module load scinet``
+6. Use ``/path/to/minc-bpipe-library/bpipe-batch.sh /path/to/pipeline.bpipe /path/to/my/inputs/*.mnc > joblist`` to generate a joblist
+7. Use ``/path/to/minc-bpipe-library/qbatch joblist 1 12:00:00`` to submit jobs to scinet queing system
 
 #QC Generation
 The script ``generate-bpipe-QC.sh`` is used to generate standardized views of the final outputs for quality control, to use:
