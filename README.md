@@ -1,9 +1,7 @@
-Library of bpipe functions for processing minc files
+# Library of bpipe functions for processing minc files
 ====================================================
 
-minc-bpipe-library provides a set of chainable minc file processing functions to (pre)process data.
-
-It requires http://www.bic.mni.mcgill.ca/ServicesSoftware/ServicesSoftwareMincToolKit, and https://github.com/ssadedin/bpipe/
+`minc-bpipe-library` provides a set of chainable minc file processing functions to (pre)process data. At the moment is our star preprocessing pipeline. By default it will perform: N4correction, Cutneck, Head and Brain masks (using BEAST) and registration to MNI (using aNTs). 
 
 To control which stages are run, edit ``pipeline.bpipe`` and add stage names using "+" to the "run" stage.
 
@@ -36,8 +34,7 @@ the pipeline. This is a very good file to keep around as as a note of what happe
 Some stages produce both ``mnc`` files and ``xfm`` files, see the ``$output`` variables for what is generated.
 
 #Scinet Operation
-New (experimental) operation on SciNet is now implemented. Inputs are split into 8 file chunks and submitted
-as local bpipe jobs on scinet nodes
+Inputs are split into 8 file chunks and submitted as local bpipe jobs on scinet nodes
 
 Steps
 
@@ -49,7 +46,23 @@ Steps
 6. Use ``/path/to/minc-bpipe-library/bpipe-batch.sh /path/to/pipeline.bpipe /path/to/my/inputs/*.mnc > joblist`` to generate a joblist
 7. Use ``/path/to/minc-bpipe-library/qbatch joblist 1 12:00:00`` to submit jobs to scinet queing system
 
-#QC Generation
+## Example:
+
+1. Create a folder for preprocessing (i.e. `mkdir preproc`) and cd into it `cd preproc`.
+
+2. Point the `bpipe-batch.sh` to where `pipeline.bpipe` is installed and then to where the T1s you are using are.
+
+`bpipe-batch.sh /home/m/mchakrav/egarza/bin/minc-bpipe-library/pipeline.bpipe /home/m/mchakrav/egarza/scratch/adhd_gen/preproc/files/*.mnc > joblist`
+
+3. Check the joblist file using `nano`
+
+4. Submit the jobs:
+
+`qbatch joblist 1 12:00:00`
+
+5. QC the resulting files. For MAGeT or CIVET you want to use the `n4corrected.cutneckapplyautocrop.mnc` in native space. You can also use the `.beastmask.mnc` files for CIVET.
+
+## QC Generation
 The script ``generate-bpipe-QC.sh`` is used to generate standardized views of the final outputs for quality control, to use:
 
 ```
@@ -57,3 +70,7 @@ The script ``generate-bpipe-QC.sh`` is used to generate standardized views of th
 > mkdir QC
 > for file in *.cutneckapplyautocrop.beastnormalize.mnc; do /path/to/minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg; done
 ```
+### QC example:
+
+`for file in *.cutneckapplyautocrop.beastnormalize.mnc; do ~/bin/minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg;done`
+
