@@ -25,7 +25,7 @@ Once you have defined your stages, you can run your pipeline on the SGE cluster 
 > git clone https://github.com/CobraLab/minc-bpipe-library.git
 #Edit minc-bpipe-library/pipeline.bpipe as you see fit
 > module load bpipe #needed to run bpipe
-> module load minc-toolkit/1.9.10 #needed for most stages
+> module load minc-toolkit/1.9.11 #needed for most stages
 > cd /path/to/store/outputs
 #Choose n to be the smaller of (number of input files, 240)
 > bpipe run -n<number> /path/to/pipeline.bpipe /path/to/inputs/*mnc
@@ -75,6 +75,8 @@ The script ``generate-bpipe-QC.sh`` is used to generate standardized views of th
 > mkdir QC
 > for file in *.cutneckapplyautocrop.beastnormalize.mnc; do /path/to/minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg; done
 ```
+Important: To do the QC in scinet you need to load the module `scinet-dev` instead of `scinet`.
+
 ### QC example:
 
 `for file in *.cutneckapplyautocrop.beastnormalize.mnc; do ~/bin/minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg;done`
