@@ -1,7 +1,7 @@
 # Library of bpipe functions for processing minc files
 ====================================================
 
-`minc-bpipe-library` provides a set of chainable minc file processing functions to (pre)process data. At the moment is our star preprocessing pipeline. By default it will perform: N4correction, Cutneck, Head and Brain masks (using BEAST) and registration to MNI (using ANTs). 
+`minc-bpipe-library` provides a set of chainable minc file processing functions to (pre)process data. At the moment is our star preprocessing pipeline. By default it will perform: Clean and Center, N4correction Simple, Cutneck, Head and Brain masks (using BEAST) and linear registration to MNI. Check the `minc-library.bpipe` file for details on each step. 
 
 To run in any computer it requires [http://www.bic.mni.mcgill.ca/ServicesSoftware/ServicesSoftwareMincToolKit](http://www.bic.mni.mcgill.ca/ServicesSoftware/ServicesSoftwareMincToolKit), [https://github.com/ssadedin/bpipe/](https://github.com/ssadedin/bpipe/) and gnu-parallel.
 
@@ -75,7 +75,7 @@ The script ``generate-bpipe-QC.sh`` is used to generate standardized views of th
 > mkdir QC
 > for file in *.cutneckapplyautocrop.beastnormalize.mnc; do /path/to/minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg; done
 ```
-Important: To do the QC in scinet you need to load the module `scinet-dev` instead of `scinet`.
+* Important: To do the QC in scinet you need to load the module `scinet-dev` instead of `scinet`.
 
 ### QC example:
 
