@@ -82,22 +82,32 @@ n4correct = {
     //Runs the improved n3correct aka N4correct
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
     //Correction is done with a mask as per http://dx.doi.org/10.1016/j.neuroimage.2007.10.026
+    //Big mess of steps here
+    //Winzorise intensity
+    //Otsu mask, defrag, close the mask
+    //Apply the mask to remove all background
+    //Bestlinreg to mni space, use the MNI brain mask
+    //Run N4 with the brain mask as a weighting and the otsu mask to rescale intensities at the end
     uses(GB:1.75) {
     exec """
-    tmpdir=`mktemp -d`;
+    tmpdir=`mktemp -d` &&
+    mincmath -clamp -const2 \$(mincstats -quiet -pctT 1 $input.mnc) \$(mincstats -quiet -pctT 95 $input.mnc) $input.mnc \$tmpdir/trunc.mnc &&
+    mincmath -clamp -const2 \$(mincstats -quiet -pctT 1 $input.mnc) \$(mincstats -quiet -pctT 99 $input.mnc) $input.mnc \$tmpdir/trunc-final.mnc &&
 
-    N4BiasFieldCorrection -d 3 -b [200] -i $input.mnc -o \$tmpdir/0.mnc -v 1;
+    headmask \$tmpdir/trunc.mnc \$tmpdir/otsu.mnc &&
+    mincdefrag \$tmpdir/otsu.mnc \$tmpdir/otsu_defrag.mnc 1 6 &&
+    autocrop -isoexpand 50mm \$tmpdir/otsu_defrag.mnc \$tmpdir/otsu_expanded.mnc &&
+    itk_morph --exp 'D[25] E[25]' \$tmpdir/otsu_expanded.mnc \$tmpdir/otsu_expanded_closed.mnc &&
+    autocrop -from \$tmpdir/otsu_defrag.mnc \$tmpdir/otsu_expanded_closed.mnc \$tmpdir/otsu_closed.mnc &&
 
-    antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --write-composite-transform --minc --verbose
-    --output \$tmpdir/0
-    --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
-    --initial-moving-transform [${REGISTRATIONMODEL},\$tmpdir/0.mnc,1]
-    --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.5] --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 10x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox
-    --transform Affine[0.1] --metric Mattes[${REGISTRATIONMODEL},\$tmpdir/0.mnc,1,32,Random,0.5] --convergence [2000x2000x2000x2000,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 4x2x1x0vox;
+    minccalc -expression 'A[0]*A[1]' \$tmpdir/trunc.mnc \$tmpdir/otsu_closed.mnc \$tmpdir/masked.mnc &&
+    minccalc -expression 'A[0]*A[1]'  \$tmpdir/trunc-final.mnc \$tmpdir/otsu_closed.mnc \$tmpdir/trunc-final_masked.mnc &&
 
-    itk_resample --clobber --order 3 --like $input.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONWMMASK} \$tmpdir/weightmask.mnc;
+    bestlinreg_g -nmi -lsq12 -sec_target ${REGISTRATIONMODEL2} \$tmpdir/masked.mnc ${REGISTRATIONMODEL} \$tmpdir/0.xfm &&
 
-    N4BiasFieldCorrection -d 3 -b [200] -c [200x200x200x200,0.0] -w \$tmpdir/weightmask.mnc -i $input.mnc -o $output.mnc -v 1
+    itk_resample --clobber --invert_transform --labels --like \$tmpdir/trunc-final_masked.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/weightmask.mnc &&
+
+    N4BiasFieldCorrection -d 3 --verbose -r 1 -b [200] -c [200x200x200x200,0.0] -w \$tmpdir/weightmask.mnc -x \$tmpdir/otsu_closed.mnc -i \$tmpdir/trunc-final_masked.mnc -o $output.mnc
     """
     }
 }
@@ -280,7 +290,7 @@ linear_bestlinreg = {
     //Two target bestlinreg
     branch.nativemnc = "$input.mnc"
     exec """
-    bestlinreg_s -lsq12 -sec_source ${REGISTRATIONMODEL2} ${REGISTRATIONMODEL} $input.mnc $output.xfm;
+    bestlinreg_g -nmi -lsq12 -source_mask ${REGISTRATIONBRAINMASK} -sec_source ${REGISTRATIONMODEL2} ${REGISTRATIONMODEL} $input.mnc $output.xfm &&
     xfminvert $output.xfm ${output.xfm.prefix}_inverse.xfm
     """
 
@@ -480,5 +490,5 @@ clean_and_center = {
 
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
-	clean_and_center + n4correctsimple + linear_bestlinreg + cutneckapplyautocrop + beast + resample_to_lsq6_space
+	clean_and_center + n4correct + linear_bestlinreg + cutneckapplyautocrop + beast
 }
