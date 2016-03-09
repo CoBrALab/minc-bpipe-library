@@ -488,7 +488,36 @@ clean_and_center = {
     """
 }
 
+QC = {
+    //Generates QC images
+    output.dir="QC"
+    exec """
+  tmpdir=\$(mktemp -d) &&
+
+  create_verify_image \$tmpdir/t.rgb
+  -width 1920 -autocols 6 -autocol_planes t
+  -row ${branch.modelmnc}.beastnormalize.mnc color:gray
+  volume_overlay:$input.mnc:0.4:red &&
+
+  create_verify_image \$tmpdir/s.rgb
+  -width 1920 -autocols 6 -autocol_planes s
+  -row ${branch.modelmnc}.beastnormalize.mnc color:gray
+  volume_overlay:$input.mnc:0.4:red &&
+
+  create_verify_image \$tmpdir/c.rgb
+  -width 1920 -autocols 6 -autocol_planes c
+  -row ${branch.modelmnc}.beastnormalize.mnc color:gray
+  volume_overlay:$input.mnc:0.4:red &&
+
+  convert -append \$tmpdir/*.rgb $output.jpg &&
+
+  rm -r $tmpdir
+
+    """
+
+}
+
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
-	clean_and_center + n4correct + linear_bestlinreg + cutneckapplyautocrop + beast
+	clean_and_center + n4correct + linear_bestlinreg + cutneckapplyautocrop + beast + QC
 }
