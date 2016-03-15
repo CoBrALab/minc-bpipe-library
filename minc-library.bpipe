@@ -105,9 +105,12 @@ n4correct = {
 
     bestlinreg_g -nmi -lsq12 -sec_target ${REGISTRATIONMODEL2} \$tmpdir/masked.mnc ${REGISTRATIONMODEL} \$tmpdir/0.xfm &&
 
-    itk_resample --clobber --invert_transform --labels --like \$tmpdir/trunc-final_masked.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/weightmask.mnc &&
+    itk_resample --clobber --invert_transform --labels --like \$tmpdir/trunc-final_masked.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/brainmask.mnc &&
 
-    N4BiasFieldCorrection -d 3 --verbose -r 1 -b [200] -c [200x200x200x200,0.0] -w \$tmpdir/weightmask.mnc -x \$tmpdir/otsu_closed.mnc -i \$tmpdir/trunc-final_masked.mnc -o $output.mnc
+    mincmath -mult \$tmpdir/otsu_defrag.mnc \$tmpdir/brainmask.mnc \$tmpdir/weightmask.mnc &&
+
+    N4BiasFieldCorrection -d 3 --verbose -r 1 -b [200] -c [200x200x200x200,0.0] -w \$tmpdir/weightmask.mnc -x \$tmpdir/otsu_closed.mnc -i \$tmpdir/trunc-final_masked.mnc -o $output.mnc &&
+    rm -r \$tmpdir
     """
     }
 }
