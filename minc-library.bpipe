@@ -92,16 +92,15 @@ n4correct = {
     exec """
     tmpdir=`mktemp -d` &&
     mincmath -clamp -const2 \$(mincstats -quiet -pctT 1 $input.mnc) \$(mincstats -quiet -pctT 95 $input.mnc) $input.mnc \$tmpdir/trunc.mnc &&
-    mincmath -clamp -const2 \$(mincstats -quiet -pctT 1 $input.mnc) \$(mincstats -quiet -pctT 99 $input.mnc) $input.mnc \$tmpdir/trunc-final.mnc &&
 
     headmask \$tmpdir/trunc.mnc \$tmpdir/otsu.mnc &&
     mincdefrag \$tmpdir/otsu.mnc \$tmpdir/otsu_defrag.mnc 1 6 &&
     autocrop -isoexpand 50mm \$tmpdir/otsu_defrag.mnc \$tmpdir/otsu_expanded.mnc &&
     itk_morph --exp 'D[25] E[25]' \$tmpdir/otsu_expanded.mnc \$tmpdir/otsu_expanded_closed.mnc &&
-    autocrop -from \$tmpdir/otsu_defrag.mnc \$tmpdir/otsu_expanded_closed.mnc \$tmpdir/otsu_closed.mnc &&
+    mincresample -keep -near -like \$tmpdir/otsu_defrag.mnc \$tmpdir/otsu_expanded_closed.mnc \$tmpdir/otsu_closed.mnc &&
 
     minccalc -expression 'A[0]*A[1]' \$tmpdir/trunc.mnc \$tmpdir/otsu_closed.mnc \$tmpdir/masked.mnc &&
-    minccalc -expression 'A[0]*A[1]'  \$tmpdir/trunc-final.mnc \$tmpdir/otsu_closed.mnc \$tmpdir/trunc-final_masked.mnc &&
+    minccalc -expression 'A[0]*A[1]'  $input.mnc \$tmpdir/otsu_closed.mnc \$tmpdir/trunc-final_masked.mnc &&
 
     bestlinreg_g -nmi -lsq12 -sec_target ${REGISTRATIONMODEL2} \$tmpdir/masked.mnc ${REGISTRATIONMODEL} \$tmpdir/0.xfm &&
 
