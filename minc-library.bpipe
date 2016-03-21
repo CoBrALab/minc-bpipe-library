@@ -179,6 +179,14 @@ cutneckapplyautocrop = {
     ${CUTNECKMODEL}_headmask_D.mnc ${output("${branch.name}.headmask.mnc")}
     """
 
+    //Transoforms a pseudo-headmask to native space for TIV
+    exec """
+    itk_resample --clobber --labels --byte
+    --like ${nativemnc}
+    --transform $input.xfm
+    ${REGISTRATIONBRAINMASK} ${output("${branch.name}.TIV.mnc")}
+    """
+
     exec """
     minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${nativemnc} ${output("${branch.name}.headmask.mnc")} ${output("${branch.name}.cutneck.mnc")}
     """
