@@ -8,4 +8,15 @@ pipeline=$1
 shift
 args=( "$@" )
 
-echo ${args[@]} | parallel --no-notice --recend "" --delimiter ' ' -N8 "echo bpipe run -n 8 -m 13930 $pipeline {1} {2} {3} {4} {5} {6} {7} {8}" | awk NF
+
+for (( i=0; i<${#args[@]}; i++ ));
+do
+  args[$i]=$(readlink -f ${args[$i]})
+done
+
+for slices in $(seq 0 $(( ${#args[@]} / 8 )))
+do
+    begin=$(( $slices * 8  ))
+    mkdir -p output${slices}
+    echo "cd output${slices}; bpipe run -n 8 -m 13930 $pipeline ${args[@]:$begin:8}"
+done
