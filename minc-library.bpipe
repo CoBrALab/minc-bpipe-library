@@ -402,6 +402,15 @@ beastextract = {
     exec """
     minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] ${nativemnc}  ${output("${branch.name}.beastmask.mnc")} ${output("${branch.name}.beastextract.mnc")}
     """
+
+    //Generate a brainmatter mask for volume estimations
+    exec """
+    tmpdir=`mktemp -d` &&
+    ThresholdImage 3 ${nativemnc} \$tmpdir/otsu.mnc Otsu 1 &&
+    ImageMath 3 ${output("${branch.name}.brainvolume.mnc")} m \$tmpdir/otsu.mnc ${output("${branch.name}.beastmask.mnc")} &&
+    rm -r \$tmpdir
+    """
+
 }
 
 classify_clean = {
