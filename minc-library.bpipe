@@ -370,7 +370,11 @@ beastnormalize = {
     //of the voxels in the intensity histogram
     //No registration or n3 since this is done in prior steps
     branch.modelmnc = "$input.mnc.prefix"
-    exec "volume_pol --order 1 --min 0 --max 100 --noclamp  $input.mnc ${REGISTRATIONMODEL} --source_mask ${REGISTRATIONBRAINMASK} --target_mask ${REGISTRATIONBRAINMASK} --clobber $output.mnc"
+    exec """
+         tmpdir=`mktemp -d`;
+         minc_anlm $input.mnc \$tmpdir/${branch.name}.denoise.mnc &&
+         volume_pol --order 1 --min 0 --max 100 --noclamp  \$tmpdir/${branch.name}.denoise.mnc ${REGISTRATIONMODEL} --source_mask ${REGISTRATIONBRAINMASK} --target_mask ${REGISTRATIONBRAINMASK} --clobber $output.mnc
+         """
 }
 
 beastmask = {
