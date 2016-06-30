@@ -300,7 +300,7 @@ linear_bestlinreg = {
     //Two target bestlinreg
     branch.nativemnc = "$input.mnc"
     exec """
-    bestlinreg_g -nmi -lsq12 -source_mask ${REGISTRATIONBRAINMASK} -sec_source ${REGISTRATIONMODEL2} ${REGISTRATIONMODEL} $input.mnc $output.xfm &&
+    bestlinreg_g -clobber -nmi -lsq12 -source_mask ${REGISTRATIONBRAINMASK} -sec_source ${REGISTRATIONMODEL2} ${REGISTRATIONMODEL} $input.mnc $output.xfm &&
     xfminvert $output.xfm ${output.xfm.prefix}_inverse.xfm
     """
 
