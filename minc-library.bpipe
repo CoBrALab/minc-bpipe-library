@@ -34,12 +34,6 @@ REGISTRATIONWMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
 
-//Tagfile for VBM statistics
-VBMTAGDIR="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2"
-VBMTAGFILE="mni_icbm152_t1_tal_nlin_sym_09c_ntags_1000_prob_90_nobg.tag"
-VBMBGTAGFILE="mni_icbm152_t1_tal_nlin_sym_09c_ntags_1000_bg.tag"
-
-
 mincconvert = {
     branch.name = "${branch.name}.mincconvert"
     //Runs mincconvert to make minc2 files
@@ -126,7 +120,6 @@ n4correctsimple = {
     """
 }
 
-
 dumb_normalize = {
     //Performs a dumb normalization of the data, throwing away top and bottom 1%
     //Data is then scaled 0-65535 and stored in a sensible unsigned int format
@@ -156,11 +149,6 @@ pol_normalize = {
     volume_pol --verbose --clobber --order 1 --min 0 --max 65535 $input.mnc ${NORMALIZEMODEL} $output.mnc
     """
 }
-
-inormalize = {
-    //Performal normalization against a model using inormalize (normalize_mri)
-}
-
 
 cutneckapplyautocrop = {
     //Alternative implementation of cutneck which applies via autocrop in native space
@@ -417,29 +405,6 @@ beastextract = {
 
 }
 
-classify_clean = {
-    //Classifies brain matter into white/gray/csf
-    //Requires registered brain and mask
-    //Requires minc-toolkit
-    exec """
-    classify_clean
-    -tagdir ${VBMTAGDIR}
-    -tagfile ${VBMTAGFILE}
-    -bgtagfile ${VBMBGTAGFILE}
-    -mask $input.mnc
-    -mask_source -clean_tags -clobber
-    ${branch.modelmnc}.mnc $output.mnc
-    """
-}
-
-extractvbm = {
-    //Extracts white/grey/csf from classified brain
-    //Requires minc-toolkit
-    multi   "smooth_mask -binvalue 1 -fwhm 10 ${input.mnc} $output.csf.mnc",
-            "smooth_mask -binvalue 2 -fwhm 10 ${input.mnc} $output.gm.mnc",
-            "smooth_mask -binvalue 3 -fwhm 10 ${input.mnc} $output.wm.mnc"
-}
-
 linear_register = segment {
     //Multi-stage registration to a model
     rough_register + affine_register + affine_register_masked
@@ -452,10 +417,6 @@ beast = segment {
     //Now registers the brain to MNI space first using mincANTS
     //http://www.ncbi.nlm.nih.gov/pubmed/21945694
     beastnormalize + beastmask + beastextract
-}
-
-VBM = segment {
-    beast + classify_clean + extractvbm
 }
 
 defaceapply = {
