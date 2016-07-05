@@ -45,11 +45,10 @@ Steps
 1. ``git clone https://github.com/CobraLab/minc-bpipe-library.git``
 2. ``rm minc-bpipe-library/bpipe.config``
 3. ``sed -i 's#/opt/quarantine#/project/m/mchakrav/quarantine#g' minc-bpipe-library/minc-library.bpipe``
-4. Include the path in the .bashrc ``PATH=$PATH:/home/m/mchakrav/user/bin/minc-bpipe-library``
-5. ``cd /path/to/outputs``
-6. ``module load scinet``
-7. Use ``/path/to/minc-bpipe-library/bpipe-batch.sh /path/to/pipeline.bpipe /path/to/my/inputs/*.mnc > joblist`` to generate a joblist
-8. Use ``/path/to/minc-bpipe-library/qbatch joblist 1 12:00:00`` to submit jobs to scinet queing system
+4. ``cd /path/to/outputs``
+5. ``module load scinet``
+6. Use ``/path/to/minc-bpipe-library/bpipe-batch.sh /path/to/pipeline.bpipe /path/to/my/inputs/*.mnc > joblist`` to generate a joblist
+7. Use ``/path/to/minc-bpipe-library/qbatch joblist 1 12:00:00`` to submit jobs to scinet queing system
 
 ## Example:
 
