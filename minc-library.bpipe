@@ -30,6 +30,7 @@ REGISTRATIONHEADMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/m
 
 //Mask of white matter for N4 improvement
 REGISTRATIONWMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_wm_tal_nlin_sym_09c.mnc"
+REGISTRATIONGMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_gm_tal_nlin_sym_09c.mnc"
 
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
@@ -91,26 +92,15 @@ n4correct = {
     uses(GB:1.75) {
     exec """
     tmpdir=`mktemp -d` &&
-    mincmath -clamp -const2 \$(mincstats -quiet -pctT 1 $input.mnc) \$(mincstats -quiet -pctT 95 $input.mnc) $input.mnc \$tmpdir/trunc.mnc &&
-
-    headmask \$tmpdir/trunc.mnc \$tmpdir/otsu.mnc &&
-    mincdefrag \$tmpdir/otsu.mnc \$tmpdir/otsu_defrag.mnc 1 6 &&
-    autocrop -isoexpand 50mm \$tmpdir/otsu_defrag.mnc \$tmpdir/otsu_expanded.mnc &&
-    itk_morph --exp 'D[25] E[25]' \$tmpdir/otsu_expanded.mnc \$tmpdir/otsu_expanded_closed.mnc &&
-    mincresample -keep -near -like \$tmpdir/otsu_defrag.mnc \$tmpdir/otsu_expanded_closed.mnc \$tmpdir/otsu_closed.mnc &&
-
-    minccalc -expression 'A[0]*A[1]' \$tmpdir/trunc.mnc \$tmpdir/otsu_closed.mnc \$tmpdir/masked.mnc &&
-    minccalc -expression 'A[0]*A[1]'  $input.mnc \$tmpdir/otsu_closed.mnc \$tmpdir/trunc-final_masked.mnc &&
-
-    bestlinreg_g -nmi -lsq12 -sec_target ${REGISTRATIONMODEL2} \$tmpdir/masked.mnc ${REGISTRATIONMODEL} \$tmpdir/0.xfm &&
-
-    itk_resample --clobber --invert_transform --labels --like \$tmpdir/trunc-final_masked.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/brainmask.mnc &&
-
-    mincmath -mult \$tmpdir/otsu_defrag.mnc \$tmpdir/brainmask.mnc \$tmpdir/weightmask.mnc &&
-
-    N4BiasFieldCorrection -d 3 --verbose -r 1 -b [200] -c [200x200x200x200,0.0] -w \$tmpdir/weightmask.mnc -x \$tmpdir/otsu_closed.mnc -i \$tmpdir/trunc-final_masked.mnc -o $output.mnc &&
+    minccalc -expression 'A[0]?1:1' $input.mnc \$tmpdir/mask.mnc &&
+    N4BiasFieldCorrection -d 3 --verbose -r 1 -w \$tmpdir/mask.mnc -x \$tmpdir/mask.mnc -b [200] -c [200x200x200x200,0.0] -i $input.mnc -o \$tmpdir/correct1.mnc &&
+    bestlinreg_g -nmi -lsq12 -source_mask ${REGISTRATIONBRAINMASK} ${REGISTRATIONMODEL} \$tmpdir/correct1.mnc \$tmpdir/0.xfm &&
+    itk_resample --order 3 --like \$tmpdir/correct1.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONWMMASK} \$tmpdir/wm.mnc &&
+    itk_resample --order 3 --like \$tmpdir/correct1.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONGMMASK} \$tmpdir/gm.mnc &&
+    minccalc -expression 'A[0]>0.1||A[1]>0.1?1:0' \$tmpdir/wm.mnc \$tmpdir/gm.mnc \$tmpdir/combined.mnc &&
+    N4BiasFieldCorrection -d 3 --verbose -r 0 -w \$tmpdir/combined.mnc -x \$tmpdir/mask.mnc -b [200] -c [200x200x200x200,0.0] -i \$tmpdir/correct1.mnc -o $output.mnc &&
     rm -r \$tmpdir
-    """
+    ""","n4correct"
     }
 }
 
@@ -122,7 +112,7 @@ n4correctsimple = {
     //ANTs must be loaded after minc-toolkit to override the minc-toolkit version
     //Simple n4 done without a mask for when bestlinreg in n4correct fails badly
     exec """
-    N4BiasFieldCorrection -d 3 -r -b [200] -c [200x200x200x200,0.0] -i $input.mnc -o $output.mnc
+    N4BiasFieldCorrection -d 3 -b [200] -c [200x200x200x200,0.0] -i $input.mnc -o $output.mnc
     """
 }
 
