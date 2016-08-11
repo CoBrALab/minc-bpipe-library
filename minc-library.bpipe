@@ -94,13 +94,46 @@ n4correct = {
     uses(GB:1.75) {
     exec """
     tmpdir=`mktemp -d` &&
-    minccalc -expression 'A[0]?1:1' $input.mnc \$tmpdir/mask.mnc &&
-    N4BiasFieldCorrection -d 3 --verbose -r 1 -w \$tmpdir/mask.mnc -x \$tmpdir/mask.mnc -b [200] -c [200x200x200x200,0.0] -i $input.mnc -o \$tmpdir/correct1.mnc &&
-    bestlinreg_g -nmi -lsq12 -source_mask ${REGISTRATIONBRAINMASK} ${REGISTRATIONMODEL} \$tmpdir/correct1.mnc \$tmpdir/0.xfm &&
-    itk_resample --order 3 --like \$tmpdir/correct1.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONWMMASK} \$tmpdir/wm.mnc &&
-    itk_resample --order 3 --like \$tmpdir/correct1.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONGMMASK} \$tmpdir/gm.mnc &&
-    minccalc -expression 'A[0]>0.1||A[1]>0.1?1:0' \$tmpdir/wm.mnc \$tmpdir/gm.mnc \$tmpdir/combined.mnc &&
-    N4BiasFieldCorrection -d 3 --verbose -r 0 -w \$tmpdir/combined.mnc -x \$tmpdir/mask.mnc -b [200] -c [200x200x200x200,0.0] -i \$tmpdir/correct1.mnc -o $output.mnc &&
+  minccalc -expression 'A[0]?1:1' $input.mnc \$tmpdir/mask.mnc &&
+
+  ImageMath 3 \$tmpdir/trunc.mnc TruncateImageIntensity $input.mnc -1 0.99 1024 &&
+  ThresholdImage 3 $input.mnc \$tmpdir/hotmask.mnc \$(mincstats -quiet -pctT 99 $input.mnc) \$(mincstats -quiet -max $input.mnc) 0 1 &&
+
+  N4BiasFieldCorrection -d 3 --verbose -r 1 -w \$tmpdir/mask.mnc -x \$tmpdir/mask.mnc
+  -b [400] -c [300x300x300x300x300,0.0] -i \$tmpdir/trunc.mnc -o \$tmpdir/correct1.mnc --histogram-sharpening [0.05,0.01,1000] &&
+
+  bestlinreg_g -nmi -lsq12 -source_mask ${REGISTRATIONBRAINMASK} -sec_source ${REGISTRATIONMODEL2} ${REGISTRATIONMODEL} \$tmpdir/correct1.mnc \$tmpdir/0.xfm -clobber &&
+
+  itk_resample --labels --like \$tmpdir/correct1.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/brainmask.mnc --clobber &&
+
+  itk_morph --exp D[5] \$tmpdir/brainmask.mnc \$tmpdir/brainmaskD.mnc --clobber &&
+  ImageMath 3 \$tmpdir/brainmaskD_nohot.mnc m \$tmpdir/brainmaskD.mnc \$tmpdir/hotmask.mnc &&
+
+  DenoiseImage -d 3 -i \$tmpdir/correct1.mnc -o \$tmpdir/denoise.mnc -d 3 -n Rician --verbose &&
+
+  ThresholdImage 3 \$tmpdir/denoise.mnc \$tmpdir/kmeans.mnc Kmeans 3 \$tmpdir/brainmaskD_nohot.mnc &&
+
+  minclookup -discrete -lut_string '3 1;2 1' \$tmpdir/kmeans.mnc \$tmpdir/combined.mnc -clobber &&
+
+  N4BiasFieldCorrection -d 3 --verbose -r 1 -w \$tmpdir/combined.mnc -x \$tmpdir/mask.mnc
+  -b [400] -c [300x300x300x300x300,0.0] -i \$tmpdir/correct1.mnc -o \$tmpdir/precorrect.mnc --histogram-sharpening [0.05,0.01,1000] &&
+
+  bestlinreg_g -nmi -lsq12 -source_mask ${REGISTRATIONBRAINMASK} -sec_source ${REGISTRATIONMODEL2} ${REGISTRATIONMODEL} \$tmpdir/precorrect.mnc \$tmpdir/0.xfm -clobber &&
+
+  itk_resample --labels --like \$tmpdir/precorrect.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/brainmask.mnc --clobber &&
+
+  itk_morph --exp D[5] \$tmpdir/brainmask.mnc \$tmpdir/brainmaskD.mnc --clobber &&
+  ImageMath 3 \$tmpdir/brainmaskD_nohot.mnc m \$tmpdir/brainmaskD.mnc \$tmpdir/hotmask.mnc &&
+
+  DenoiseImage -d 3 -i \$tmpdir/precorrect.mnc -o \$tmpdir/denoise.mnc -d 3 -n Rician --verbose &&
+
+  ThresholdImage 3 \$tmpdir/denoise.mnc \$tmpdir/kmeans.mnc Kmeans 3 \$tmpdir/brainmaskD_nohot.mnc &&
+
+  minclookup -discrete -lut_string '3 1;2 1' \$tmpdir/kmeans.mnc \$tmpdir/combined.mnc -clobber &&
+
+   N4BiasFieldCorrection -d 3 --verbose -r 1 -w \$tmpdir/combined.mnc -x \$tmpdir/mask.mnc
+   -b [400] -c [300x300x300x300x300,0.0] -i \$tmpdir/correct1.mnc -o $output.mnc --histogram-sharpening [0.05,0.01,1000] &&
+
     rm -r \$tmpdir
     ""","n4correct"
     }
