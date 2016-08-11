@@ -295,10 +295,13 @@ linear_bestlinreg = {
     """
 
     exec """
-    itk_resample --clobber --order 3 --short
+    tmpdir=`mktemp -d` &&
+    itk_resample --clobber --order 5
     --like ${REGISTRATIONMODEL}
     --transform ${output.xfm.prefix}_inverse.xfm
-    $input.mnc $output.mnc
+    $input.mnc \$tmpdir/trasnformed.mnc &&
+    mincmath -clamp -const2 0 \$(mincstats -quiet -max \$tmpdir/trasnformed.mnc) \$tmpdir/trasnformed.mnc $output.mnc &&
+    rm -r \$tmpdir
     """
 }
 
@@ -342,10 +345,13 @@ resample_to_lsq6_space = {
     xfmconcat ${input.xfm.prefix}_inverse.xfm \$tmpdir/${branch.name}.unscale.xfm ${output("${branch.name}.lsq6.xfm")}
     """
     exec """
-    itk_resample --clobber --order 3 --short
+    tmpdir=`mktemp -d` &&
+    itk_resample --clobber --order 5 --short
     --like ${REGISTRATIONMODEL}
     --transform ${output("${branch.name}.lsq6.xfm")}
-    ${branch.name}.mnc ${output("${branch.name}.lsq6.mnc")}
+    ${branch.name}.mnc \$tmpdir/lsq6.mnc &&
+    mincmath -clamp -const2 0 \$(mincstats -quiet -max \$tmpdir/lsq6.mnc) \$tmpdir/lsq6.mnc ${output("${branch.name}.lsq6.mnc")} &&
+    rm -r \$tmpdir
     """
     exec """
     itk_resample --clobber --labels --byte
