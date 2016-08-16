@@ -340,6 +340,37 @@ linear_bestlinreg = {
     """
 }
 
+nonlinear_antsRegistration = {
+    //Nonlinearly registers brain to a given model
+    //Transforms brain to model space
+    //Uses affine regstration passed from previous stage
+    //Uses brain mask for model
+    //Mask must be in "fixed" space, so this registration must be setup backwards
+    //Requires minc-toolkit
+    branch.nonlinmnc="${input.mnc.prefix}.nonlinear_register"
+
+    exec """
+    antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --verbose --minc
+    --output $branch.nonlinmnc
+    --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
+    --transform SyN[0.1,3,0] --metric CC[$input.mnc,${REGISTRATIONMODEL},1,4]
+    --convergence [500x250x100x100x25,1e-6,10] --shrink-factors 8x6x4x2x1 --smoothing-sigmas 6x4x2x1x0mm
+    #${output("${branch.nonlinmnc}0_inverse_NL.xfm")}"
+    ""","nonlinear_register"
+
+    forward input.mnc
+    branch.nonlintransform = "${branch.nonlinmnc}0_inverse_NL.xfm"
+}
+
+extract_DBM = {
+    exec """
+    CreateJacobianDeterminantImage 3 ${branch.nonlinmnc}0_inverse_NL_grid_0.mnc ${output("${branch.nonlinmnc}_determinant.mnc")} 0 0
+    """
+    exec """
+    CreateJacobianDeterminantImage 3 ${branch.nonlinmnc}0_inverse_NL_grid_0.mnc ${output("${branch.nonlinmnc}_log_determinant.mnc")} 1 0
+    """
+}
+
 linear_antsRegistration_twotarget = {
     //Multi-stage registration of input brain to model space with two targets
     branch.nativemnc = "$input.mnc"
@@ -574,4 +605,8 @@ QC = {
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
 	clean_and_center + n4correct + linear_bestlinreg + cutneckapplyautocrop + beast + QC
+}
+
+dbm = segment {
+    clean_and_center + n4correct + linear_bestlinreg + cutneckapplyautocrop + nonlinear_antsRegistration + extract_DBM
 }
