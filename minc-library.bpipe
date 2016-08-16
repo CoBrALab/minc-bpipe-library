@@ -32,6 +32,8 @@ REGISTRATIONHEADMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/m
 REGISTRATIONWMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_wm_tal_nlin_sym_09c.mnc"
 REGISTRATIONGMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_gm_tal_nlin_sym_09c.mnc"
 
+REGISTRATIONOUTLINE="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_outline.mnc"
+
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
 
@@ -516,17 +518,17 @@ QC = {
   create_verify_image \$tmpdir/t.rgb
   -width 1920 -autocols 6 -autocol_planes t
   -row ${branch.modelmnc}.beastnormalize.mnc color:gray
-  volume_overlay:$input.mnc:0.4:red &&
+  volume_overlay:$input.mnc:0.4:red volume_overlay:${REGISTRATIONOUTLINE}:1:blue &&
 
   create_verify_image \$tmpdir/s.rgb
   -width 1920 -autocols 6 -autocol_planes s
   -row ${branch.modelmnc}.beastnormalize.mnc color:gray
-  volume_overlay:$input.mnc:0.4:red &&
+  volume_overlay:$input.mnc:0.4:red volume_overlay:${REGISTRATIONOUTLINE}:1:blue &&
 
   create_verify_image \$tmpdir/c.rgb
   -width 1920 -autocols 6 -autocol_planes c
   -row ${branch.modelmnc}.beastnormalize.mnc color:gray
-  volume_overlay:$input.mnc:0.4:red &&
+  volume_overlay:$input.mnc:0.4:red volume_overlay:${REGISTRATIONOUTLINE}:1:blue &&
 
   convert -append \$tmpdir/*.rgb $output.jpg &&
 
