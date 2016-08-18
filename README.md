@@ -67,12 +67,15 @@ Steps
 5. QC the resulting files. For MAGeT or CIVET you want to use the `n4corrected.cutneckapplyautocrop.mnc` in native space. You can also use the `.beastmask.mnc` files for CIVET.
 
 ## QC Generation
-The script ``generate-bpipe-QC.sh`` is used to generate standardized views of the final outputs for quality control, to use:
+For pipelines at the CIC, QC images are automatically generated.
+
+The script ``generate-bpipe-QC.sh`` is used to generate standardized views of the final outputs for quality control on SciNet:
 
 ```
 #In your output directory
+> module load scinet-dev
 > mkdir QC
-> for file in *.cutneckapplyautocrop.beastnormalize.mnc; do /path/to/minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg; done
+> for file in *.cutneckapplyautocrop.beastnormalize.mnc; do ../minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg; done
 ```
 ### QC example:
 
