@@ -75,9 +75,9 @@ The script ``generate-bpipe-QC.sh`` is used to generate standardized views of th
 #In your output directory
 > module load scinet-dev
 > mkdir QC
-> for file in *.cutneckapplyautocrop.beastnormalize.mnc; do ../minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg; done
+> for file in *linear_bestlinreg.cutneckapplyautocrop.beastnormalize.mnc; do ../minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg; done
 ```
 ### QC example:
 
-`for file in *.cutneckapplyautocrop.beastnormalize.mnc; do ~/bin/minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg;done`
+`for file in *linear_bestlinreg.cutneckapplyautocrop.beastnormalize.mnc; do ~/bin/minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg;done`
 
