@@ -292,7 +292,7 @@ affine_register_masked = {
     """
 
     exec """
-    mincresample -verbose -clobber -2 -short -unsigned -sinc
+    mincresample -verbose -clobber -2 -short -unsigned
     -like ${REGISTRATIONMODEL}
     -transform ${output.xfm.prefix}_inverse.xfm
     $input.mnc $output.mnc
@@ -314,7 +314,7 @@ linear_antsRegistration = {
     }
 
     exec """
-    itk_resample --clobber --order 3 --short
+    itk_resample --clobber --order 1 --short
     --like ${REGISTRATIONMODEL}
     --transform ${output.xfm.prefix}_inverse.xfm
     $input.mnc $output.mnc
@@ -331,7 +331,7 @@ linear_bestlinreg = {
 
     exec """
     tmpdir=`mktemp -d` &&
-    itk_resample --clobber --order 5
+    itk_resample --clobber --order 1
     --like ${REGISTRATIONMODEL}
     --transform ${output.xfm.prefix}_inverse.xfm
     $input.mnc \$tmpdir/trasnformed.mnc &&
@@ -392,7 +392,7 @@ linear_antsRegistration_twotarget = {
     }
 
     exec """
-    itk_resample --clobber --order 3 --short
+    itk_resample --clobber --order 1 --short
     --like ${REGISTRATIONMODEL}
     --transform ${output.xfm.prefix}_inverse.xfm
     $input.mnc $output.mnc
@@ -412,7 +412,7 @@ resample_to_lsq6_space = {
     """
     exec """
     tmpdir=`mktemp -d` &&
-    itk_resample --clobber --order 5 --short
+    itk_resample --clobber --order 1 --short
     --like ${REGISTRATIONMODEL}
     --transform ${output("${branch.name}.lsq6.xfm")}
     ${branch.name}.mnc \$tmpdir/lsq6.mnc &&
