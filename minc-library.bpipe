@@ -33,6 +33,7 @@ REGISTRATIONWMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni
 REGISTRATIONGMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_gm_tal_nlin_sym_09c.mnc"
 
 REGISTRATIONOUTLINE="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_outline.mnc"
+REGISTRATIONANTIMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_antimask.mnc"
 
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
@@ -204,14 +205,6 @@ cutneckapplyautocrop = {
     ${CUTNECKMODEL}_headmask_D.mnc ${output("${branch.name}.headmask.mnc")}
     """
 
-    //Transoforms a pseudo-headmask to native space for TIV
-    exec """
-    itk_resample --clobber --labels --byte
-    --like ${nativemnc}
-    --transform $input.xfm
-    ${REGISTRATIONBRAINMASK} ${output("${branch.name}.TIV.mnc")}
-    """
-
     exec """
     minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${nativemnc} ${output("${branch.name}.headmask.mnc")} ${output("${branch.name}.cutneck.mnc")}
     """
@@ -326,8 +319,10 @@ linear_bestlinreg = {
     branch.nativemnc = "$input.mnc"
     exec """
     bestlinreg_g -clobber -nmi -lsq12 -source_mask ${REGISTRATIONBRAINMASK} -sec_source ${REGISTRATIONMODEL2} ${REGISTRATIONMODEL} $input.mnc $output.xfm &&
-    xfminvert $output.xfm ${output.xfm.prefix}_inverse.xfm
+    xfminvert $output.xfm ${output.xfm.prefix}_inverse.xfm &&
+    bestlinreg_g -clobber -nmi -lsq12 -source_mask ${REGISTRATIONANTIMASK} ${REGISTRATIONMODEL} $input.mnc ${output.xfm.prefix}_ICV.xfm
     """
+
 
     exec """
     tmpdir=`mktemp -d` &&
