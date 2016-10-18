@@ -218,7 +218,7 @@ cutneckapplyautocrop = {
 
     //Applies calculates bounding box from data
     exec """
-    autocrop -clobber -isoexpand 10v -bbox ${output("${branch.name}.headmask.mnc")} ${output("${branch.name}.cutneck.mnc")} ${output("${branch.name}.cutneckapplyautocrop.mnc")}
+    autocrop -clobber -isoexpand 10mm -bbox ${output("${branch.name}.headmask.mnc")} ${output("${branch.name}.cutneck.mnc")} ${output("${branch.name}.cutneckapplyautocrop.mnc")}
     """
     branch.nativemnc = "${branch.name}.cutneckapplyautocrop.mnc"
     branch.name = "${branch.name}.cutneckapplyautocrop"
