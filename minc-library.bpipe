@@ -33,6 +33,7 @@ REGISTRATIONWMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni
 REGISTRATIONGMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_gm_tal_nlin_sym_09c.mnc"
 
 REGISTRATIONOUTLINE="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_outline.mnc"
+REGISTRATIONANTIMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_antimask.mnc"
 
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
@@ -86,55 +87,15 @@ n4correct = {
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
     //Correction is done with a mask as per http://dx.doi.org/10.1016/j.neuroimage.2007.10.026
     //Big mess of steps here
-    //Winzorise intensity
-    //Otsu mask, defrag, close the mask
-    //Apply the mask to remove all background
-    //Bestlinreg to mni space, use the MNI brain mask
-    //Run N4 with the brain mask as a weighting and the otsu mask to rescale intensities at the end
+    //Do a whole-scan iteration
+    //Find a rough brain mask
+    //Correct again with brain mask
+    //Do WM/GM classification
+    //Correct again
+    //Repeat 2 more times
     uses(GB:1.75) {
     exec """
-    tmpdir=`mktemp -d` &&
-  minccalc -expression 'A[0]?1:1' $input.mnc \$tmpdir/mask.mnc &&
-
-  ImageMath 3 \$tmpdir/trunc.mnc TruncateImageIntensity $input.mnc -1 0.99 1024 &&
-  ThresholdImage 3 $input.mnc \$tmpdir/hotmask.mnc \$(mincstats -quiet -pctT 99 $input.mnc) \$(mincstats -quiet -max $input.mnc) 0 1 &&
-
-  N4BiasFieldCorrection -d 3 --verbose -r 1 -w \$tmpdir/mask.mnc -x \$tmpdir/mask.mnc
-  -b [400] -c [300x300x300x300x300,0.0] -i \$tmpdir/trunc.mnc -o \$tmpdir/correct1.mnc --histogram-sharpening [0.05,0.01,1000] &&
-
-  bestlinreg_g -nmi -lsq12 -source_mask ${REGISTRATIONBRAINMASK} -sec_source ${REGISTRATIONMODEL2} ${REGISTRATIONMODEL} \$tmpdir/correct1.mnc \$tmpdir/0.xfm -clobber &&
-
-  itk_resample --labels --like \$tmpdir/correct1.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/brainmask.mnc --clobber &&
-
-  itk_morph --exp D[5] \$tmpdir/brainmask.mnc \$tmpdir/brainmaskD.mnc --clobber &&
-  ImageMath 3 \$tmpdir/brainmaskD_nohot.mnc m \$tmpdir/brainmaskD.mnc \$tmpdir/hotmask.mnc &&
-
-  DenoiseImage -d 3 -i \$tmpdir/correct1.mnc -o \$tmpdir/denoise.mnc -d 3 -n Rician --verbose &&
-
-  ThresholdImage 3 \$tmpdir/denoise.mnc \$tmpdir/kmeans.mnc Kmeans 3 \$tmpdir/brainmaskD_nohot.mnc &&
-
-  minclookup -discrete -lut_string '3 1;2 1' \$tmpdir/kmeans.mnc \$tmpdir/combined.mnc -clobber &&
-
-  N4BiasFieldCorrection -d 3 --verbose -r 1 -w \$tmpdir/combined.mnc -x \$tmpdir/mask.mnc
-  -b [400] -c [300x300x300x300x300,0.0] -i \$tmpdir/correct1.mnc -o \$tmpdir/precorrect.mnc --histogram-sharpening [0.05,0.01,1000] &&
-
-  bestlinreg_g -nmi -lsq12 -source_mask ${REGISTRATIONBRAINMASK} -sec_source ${REGISTRATIONMODEL2} ${REGISTRATIONMODEL} \$tmpdir/precorrect.mnc \$tmpdir/0.xfm -clobber &&
-
-  itk_resample --labels --like \$tmpdir/precorrect.mnc --transform \$tmpdir/0.xfm ${REGISTRATIONBRAINMASK} \$tmpdir/brainmask.mnc --clobber &&
-
-  itk_morph --exp D[5] \$tmpdir/brainmask.mnc \$tmpdir/brainmaskD.mnc --clobber &&
-  ImageMath 3 \$tmpdir/brainmaskD_nohot.mnc m \$tmpdir/brainmaskD.mnc \$tmpdir/hotmask.mnc &&
-
-  DenoiseImage -d 3 -i \$tmpdir/precorrect.mnc -o \$tmpdir/denoise.mnc -d 3 -n Rician --verbose &&
-
-  ThresholdImage 3 \$tmpdir/denoise.mnc \$tmpdir/kmeans.mnc Kmeans 3 \$tmpdir/brainmaskD_nohot.mnc &&
-
-  minclookup -discrete -lut_string '3 1;2 1' \$tmpdir/kmeans.mnc \$tmpdir/combined.mnc -clobber &&
-
-   N4BiasFieldCorrection -d 3 --verbose -r 1 -w \$tmpdir/combined.mnc -x \$tmpdir/mask.mnc
-   -b [400] -c [300x300x300x300x300,0.0] -i \$tmpdir/correct1.mnc -o $output.mnc --histogram-sharpening [0.05,0.01,1000] &&
-
-    rm -r \$tmpdir
+    iterativeN4.sh $input.mnc $output.mnc
     ""","n4correct"
     }
 }
@@ -143,12 +104,14 @@ n4correctsimple = {
     branch.name = "${branch.name}.n4correctsimple"
     //Runs the improved n3correct aka N4correct
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
-    //Requires ANTs as it uses ANTs/ITK's implementation, as minc-toolkit's is buggy
-    //ANTs must be loaded after minc-toolkit to override the minc-toolkit version
-    //Simple n4 done without a mask for when bestlinreg in n4correct fails badly
+    //Simple n4 done with a whole-scan mask for when internal otsu masking fails
     exec """
-    N4BiasFieldCorrection -d 3 -b [200] -c [200x200x200x200,0.0] -i $input.mnc -o $output.mnc
-    """
+    tmpdir=`mktemp -d`
+
+    minccalc -expression 'A[0]?1:1' $input.mnc \$tmpdir/mask.mnc
+
+    N4BiasFieldCorrection -d 3 -s 2 -b [200] -c [300x300x300x300,0.0] -i $input.mnc -o $output.mnc -x \$tmpdir/mask.mnc --histogram-sharpening [0.05,0.01,200]
+    ""","n4correct"
 }
 
 
@@ -202,14 +165,6 @@ cutneckapplyautocrop = {
     --like ${nativemnc}
     --transform $input.xfm
     ${CUTNECKMODEL}_headmask_D.mnc ${output("${branch.name}.headmask.mnc")}
-    """
-
-    //Transoforms a pseudo-headmask to native space for TIV
-    exec """
-    itk_resample --clobber --labels --byte
-    --like ${nativemnc}
-    --transform $input.xfm
-    ${REGISTRATIONBRAINMASK} ${output("${branch.name}.TIV.mnc")}
     """
 
     exec """
@@ -326,8 +281,10 @@ linear_bestlinreg = {
     branch.nativemnc = "$input.mnc"
     exec """
     bestlinreg_g -clobber -nmi -lsq12 -source_mask ${REGISTRATIONBRAINMASK} -sec_source ${REGISTRATIONMODEL2} ${REGISTRATIONMODEL} $input.mnc $output.xfm &&
-    xfminvert $output.xfm ${output.xfm.prefix}_inverse.xfm
+    xfminvert $output.xfm ${output.xfm.prefix}_inverse.xfm &&
+    bestlinreg_g -clobber -nmi -lsq12 -source_mask ${REGISTRATIONANTIMASK} ${REGISTRATIONMODEL} $input.mnc ${output.xfm.prefix}_ICV.xfm
     """
+
 
     exec """
     tmpdir=`mktemp -d` &&
