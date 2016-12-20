@@ -93,7 +93,7 @@ n4correct = {
     //Do WM/GM classification
     //Correct again
     //Repeat 2 more times
-    uses(GB:1.75) {
+    uses(GB:3,threads:8) {
     exec """
     iterativeN4.sh $input.mnc $output.mnc
     ""","n4correct"
