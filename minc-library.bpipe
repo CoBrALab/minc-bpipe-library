@@ -1,45 +1,45 @@
-BEASTMODEL_DIR="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2"
+BEASTMODEL_DIR="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2"
 BEASTMODEL_NAME="mni_icbm152_t1_tal_nlin_sym_09c"
-BEASTLIBRARY_DIR="/opt/quarantine/resources/BEaST_libraries/combined"
+BEASTLIBRARY_DIR="${System.getenv().QUARANTINE_PATH}/resources/BEaST_libraries/combined"
 
 //Model which has a headmask, must correspond to the same space as MNIMODEL
-CUTNECKMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
+CUTNECKMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
 
 //Model which has a facemask, must correspond to the same space as MNIMODEL
-DEFACEMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
+DEFACEMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
 
 //Specify target linear registration model here options are
 //sym or asym
 //t1, t2, or pd
 //Models older than icbm_2009c are also available, see resources directory
 //Choice of model affects MNI_register, cutneck, and deface
-REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
-//REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t1_tal_nlin_asym_09c.mnc"
-//REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
-//REGISTRATIONMODEL="/opt/quarantine/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
+REGISTRATIONMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
+//REGISTRATIONMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t1_tal_nlin_asym_09c.mnc"
+//REGISTRATIONMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t2_tal_nlin_sym_09c.mnc"
+//REGISTRATIONMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_asym_09c_minc2/mni_icbm152_t2_tal_nlin_asym_09c.mnc"
 
 //Optional second registration model for two-model registration
 //ADNI MNI MODEL
-REGISTRATIONMODEL2="/opt/quarantine/resources/mni_adni/mni_adni_t1w_tal_nlin_asym.mnc"
+REGISTRATIONMODEL2="${System.getenv().QUARANTINE_PATH}/resources/mni_adni/mni_adni_t1w_tal_nlin_asym.mnc"
 //PEDIATRIC MNI MODEL
-//REGISTRATIONMODEL2="/opt/quarantine/resources/nihpd_sym_all_minc2/nihpd_sym_04.5-18.5_t1w.mnc"
+//REGISTRATIONMODEL2="${System.getenv().QUARANTINE_PATH}/resources/nihpd_sym_all_minc2/nihpd_sym_04.5-18.5_t1w.mnc"
 
 //Mask for masked registration
-REGISTRATIONBRAINMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
-REGISTRATIONHEADMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_headmask.mnc"
+REGISTRATIONBRAINMASK="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
+REGISTRATIONHEADMASK="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_headmask.mnc"
 
 //Mask of white matter for N4 improvement
-REGISTRATIONWMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_wm_tal_nlin_sym_09c.mnc"
-REGISTRATIONGMMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_gm_tal_nlin_sym_09c.mnc"
+REGISTRATIONWMMASK="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_wm_tal_nlin_sym_09c.mnc"
+REGISTRATIONGMMASK="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_gm_tal_nlin_sym_09c.mnc"
 
-REGISTRATIONOUTLINE="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_outline.mnc"
-REGISTRATIONANTIMASK="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_antimask.mnc"
+REGISTRATIONOUTLINE="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_outline.mnc"
+REGISTRATIONANTIMASK="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_antimask.mnc"
 
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
 
 //Tagfile for VBM statistics
-VBMTAGDIR="/opt/quarantine/resources/mni_icbm152_nlin_sym_09c_minc2"
+VBMTAGDIR="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2"
 VBMTAGFILE="mni_icbm152_t1_tal_nlin_sym_09c_ntags_1000_prob_90_nobg.tag"
 VBMBGTAGFILE="mni_icbm152_t1_tal_nlin_sym_09c_ntags_1000_bg.tag"
 
