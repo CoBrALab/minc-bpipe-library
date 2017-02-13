@@ -59,23 +59,7 @@ Steps
 3. ``mkdir bpipe-outputs && cd bpipe-outputs``
 4. ``module load scinet-2017 qbatch/git``
 5. Use ``../minc-bpipe-library/bpipe-batch.sh ../minc-bpipe-library/pipeline.bpipe /path/to/my/inputs/*.mnc > joblist`` to generate a joblist
-6. Use ``qbatch -N myjobname --walltime=12:00:00 joblist`` to submit jobs to scinet queing system
-
-## Example:
-
-1. Create a folder for preprocessing (i.e. `mkdir preproc`) and cd into it `cd preproc`.
-
-2. Point the `bpipe-batch.sh` to where `pipeline.bpipe` is installed and then to where the T1s you are using are.
-
-`bpipe-batch.sh /home/m/mchakrav/egarza/bin/minc-bpipe-library/pipeline.bpipe /home/m/mchakrav/egarza/scratch/adhd_gen/preproc/files/*.mnc > joblist`
-
-3. Check the joblist file using `nano`
-
-4. Submit the jobs:
-
-`qbatch joblist 1 12:00:00`
-
-5. QC the resulting files. For MAGeT or CIVET you want to use the `n4corrected.cutneckapplyautocrop.mnc` in native space. You can also use the `.beastmask.mnc` files for CIVET.
+6. Use ``qbatch -N myjobname --chunksize 1 --walltime=12:00:00 joblist`` to submit jobs to scinet queing system
 
 ## QC Generation
 For pipelines at the CIC, QC images are automatically generated.
