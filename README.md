@@ -1,7 +1,7 @@
 # Library of bpipe functions for processing minc files
 ====================================================
 
-`minc-bpipe-library` provides a set of chainable minc file processing functions to (pre)process data. At the moment is our star preprocessing pipeline. By default it will perform: N4correction, Cutneck, Head and Brain masks (using BEAST) and registration to MNI (using ANTs). 
+`minc-bpipe-library` provides a set of chainable minc file processing functions to (pre)process data. At the moment is our star preprocessing pipeline. By default it will perform: N4correction, Cutneck, Head and Brain masks (using BEAST) and registration to MNI (using ANTs).
 
 To run in any computer it requires [http://www.bic.mni.mcgill.ca/ServicesSoftware/ServicesSoftwareMincToolKit](http://www.bic.mni.mcgill.ca/ServicesSoftware/ServicesSoftwareMincToolKit), [https://github.com/ssadedin/bpipe/](https://github.com/ssadedin/bpipe/) and gnu-parallel.
 
@@ -49,8 +49,24 @@ and location but in a reversable way with no loss of information. If your datase
 you should not use ``clean_and_center`` as it will remove the intrinsic co-registration your scans have as a result of scanning
 within a single session.
 
-#Scinet Operation
-Inputs are split into 8 file chunks and submitted as local bpipe jobs on scinet nodes
+#Troubleshooting Failures
+Depending upon the type of cluster and type of files you run through bpipe, there can be a few error conditions. On SciNet
+running out of walltime can be a problem, as well as random filesystem problems. At the CIC, workstation crashes can
+interrupt some jobs, which causes the pipeline to stop.
+
+In general, this first step is always to retry running the job. Since bpipe is a pipeline tool it will not re-run completed
+stages and will continue where it left off previously. If the problems you had were intermittent then they will be resolved.
+
+Secondly, if the pipeline is repeatedly failing somewhere in the middle, the next step is to inspect the intermediate outputs
+for indications of wrong "solutions". If this is the case, then you should trace back to the origin stage of the issue and
+examine if that stage can be tweaked/modified, for more help, contact CoBrALab.
+
+Third, this pipeline heavily utilizes MINC tools and MNI templates, which all assume a RAS, neurological orientation for all
+files. If this is not the case, then processing will never succeed as registration cannot overcome such large misorientations.
+In order to resolve these issues, scans need to be properly converted into MINC, and may need flipping applied.
+
+#SciNet Operation
+Inputs are split into 8 file chunks and submitted as local bpipe jobs on SciNet nodes
 
 Steps
 
@@ -75,4 +91,3 @@ The script ``generate-bpipe-QC.sh`` is used to generate standardized views of th
 ### QC example:
 
 `for file in *linear_bestlinreg.cutneckapplyautocrop.beastnormalize.mnc; do ~/bin/minc-bpipe-library/generate-bpipe-QC.sh $file QC/$(basename $file .mnc).jpg;done`
-
