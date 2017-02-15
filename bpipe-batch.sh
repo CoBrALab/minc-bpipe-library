@@ -8,4 +8,4 @@ pipeline=$1
 shift
 args=( "$@" )
 
-echo ${args[@]} | parallel --no-notice --recend "" --delimiter ' ' -N4 "echo bpipe run -n 8 -m 13930 $pipeline {1} {2} {3} {4}" | awk NF
+echo ${args[@]} | parallel --no-notice --recend "" --delimiter ' ' -N1 "echo bpipe run -n 8 -m 13930 $pipeline {1}" | awk NF
