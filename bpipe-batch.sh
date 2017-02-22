@@ -1,11 +1,24 @@
 #!/bin/bash
 #bpipe-batch is a program intended to wrap bpipe for use on the scinet gpc cluster
 #Invocation:
-#bpipe-batch.sh /path/to/my/pipeline <list of inputs> | qbatch 1 24:00:00
+#bpipe-batch.sh /path/to/my/pipeline <list of inputs> | qbatch -N bpipe-mycohort --chunksize 1 --walltime=5:00:00 -
 #It should be invoked in the directory that will contain the output
 
-pipeline=$1
-shift
-args=( "$@" )
+set -euo pipefail
 
-echo ${args[@]} | parallel --no-notice --recend "" --delimiter ' ' -N1 "echo bpipe run -n 8 -m 13930 $pipeline {1}" | awk NF
+pipeline=$(readlink -f $1)
+shift
+
+abspathlist=""
+
+for item in "$@"
+do
+  abspathlist+="$(readlink -f $item) "
+done
+
+n=0
+while read -r line
+do
+  echo "mkdir -p run-${n}; cd run-${n}; bpipe run -n 8 -m 13930 ${pipeline} ${line}"
+  ((++n))
+done < <(xargs -n 4 <<< ${abspathlist})
