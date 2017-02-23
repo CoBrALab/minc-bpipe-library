@@ -77,7 +77,7 @@ Steps
 3. ``mkdir bpipe-outputs && cd bpipe-outputs``
 4. ``module load scinet-2017 qbatch/git``
 5. ``../minc-bpipe-library/bpipe-batch.sh ../minc-bpipe-library/pipeline.bpipe /path/to/my/inputs/*.mnc > joblist`` to generate a joblist
-6. ``qbatch -N myjobname --chunksize 1 --walltime=24:00:00 joblist`` to submit jobs to scinet queing system
+6. ``qbatch -N myjobname --chunksize 1 --walltime=8:00:00 joblist`` to submit jobs to scinet queing system
 
 #QC
 Quality control images are automatically generated in the QC directory (under the output directory) for each input file. These QC images are of the
