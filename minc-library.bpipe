@@ -270,7 +270,7 @@ linear_antsRegistration = {
     }
 
     exec """
-    itk_resample --clobber --order 1 --short
+    itk_resample --clobber --order 3 --short
     --like ${REGISTRATIONMODEL}
     --transform ${output.xfm.prefix}_inverse.xfm
     $input.mnc $output.mnc
@@ -289,7 +289,7 @@ linear_bestlinreg = {
 
     exec """
     tmpdir=`mktemp -d` &&
-    itk_resample --clobber --order 1
+    itk_resample --clobber --order 3
     --like ${REGISTRATIONMODEL}
     --transform ${output.xfm.prefix}_inverse.xfm
     $input.mnc \$tmpdir/trasnformed.mnc &&
@@ -350,7 +350,7 @@ linear_antsRegistration_twotarget = {
     }
 
     exec """
-    itk_resample --clobber --order 1 --short
+    itk_resample --clobber --order 3 --short
     --like ${REGISTRATIONMODEL}
     --transform ${output.xfm.prefix}_inverse.xfm
     $input.mnc $output.mnc
