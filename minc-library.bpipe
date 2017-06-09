@@ -369,18 +369,13 @@ resample_to_lsq6_space = {
     xfmconcat ${input.xfm.prefix}_inverse.xfm \$tmpdir/${branch.name}.unscale.xfm ${output("${branch.name}.lsq6.xfm")}
     """
     exec """
-    tmpdir=`mktemp -d` &&
-    itk_resample --clobber --order 1 --short
-    --like ${REGISTRATIONMODEL}
-    --transform ${output("${branch.name}.lsq6.xfm")}
-    ${branch.name}.mnc \$tmpdir/lsq6.mnc &&
-    mincmath -clamp -const2 0 \$(mincstats -quiet -max \$tmpdir/lsq6.mnc) \$tmpdir/lsq6.mnc ${output("${branch.name}.lsq6.mnc")} &&
-    rm -r \$tmpdir
+    mincresample -clobber -tfm_input_sampling
+    -transform ${output("${branch.name}.lsq6.xfm")}
+    ${branch.name}.mnc ${output("${branch.name}.lsq6.mnc")}
     """
     exec """
-    itk_resample --clobber --labels --byte
-    --like ${REGISTRATIONMODEL}
-    --transform ${output("${branch.name}.lsq6.xfm")}
+    mincresample -clobber -tfm_input_sampling -byte -unsigned -keep_real_range
+    -transform ${output("${branch.name}.lsq6.xfm")}
     ${branch.name}.beastmask.mnc ${output("${branch.name}.beastmask.lsq6.mnc")}
     """
 }
@@ -565,7 +560,7 @@ QC = {
 
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
-	clean_and_center + n4correct + linear_bestlinreg + cutneckapplyautocrop + beast + QC
+	clean_and_center + n4correct + linear_bestlinreg + cutneckapplyautocrop + beast + QC + resample_to_lsq6_space
 }
 
 dbm = segment {
