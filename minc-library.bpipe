@@ -421,7 +421,7 @@ beastextract = {
     exec """
     tmpdir=`mktemp -d` &&
     minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] ${nativemnc}  ${output("${branch.name}.beastmask.mnc")} \$tmpdir/extracted.mnc &&
-    autocrop -bbox \$tmpdir/extracted.mnc \$tmpdir/extracted.mnc ${output("${branch.name}.beastextract.mnc")} &&
+    autocrop -isoexpand 10mm -bbox \$tmpdir/extracted.mnc \$tmpdir/extracted.mnc ${output("${branch.name}.beastextract.mnc")} &&
     rm -r \$tmpdir
     """
 
