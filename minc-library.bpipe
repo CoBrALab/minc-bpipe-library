@@ -560,7 +560,7 @@ QC = {
 
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
-	clean_and_center + n4correct + linear_bestlinreg + cutneckapplyautocrop + beast + QC + resample_to_lsq6_space
+	n4correct + linear_bestlinreg + cutneckapplyautocrop + beast + QC + resample_to_lsq6_space
 }
 
 dbm = segment {
