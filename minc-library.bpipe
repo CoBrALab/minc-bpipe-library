@@ -109,7 +109,7 @@ n4correctsimple = {
     tmpdir=`mktemp -d`
 
     minccalc -expression 'A[0]?1:1' $input.mnc \$tmpdir/mask.mnc
-    headmask $input.mnc \$tmpdir/weight.mnc
+    minccalc -expression 'A[0]>0.5?1:0' $input.mnc \$tmpdir/weight.mnc
 
     N4BiasFieldCorrection -d 3 -s 2 -b [200] -c [300x300x300x300,0.0] -i $input.mnc -o $output.mnc -x \$tmpdir/mask.mnc -w \$tmpdir/weight.mnc --histogram-sharpening [0.05,0.01,200]
     ""","n4correct"
