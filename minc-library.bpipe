@@ -378,6 +378,11 @@ resample_to_lsq6_space = {
     -transform ${output("${branch.name}.lsq6.xfm")}
     ${branch.name}.beastmask.mnc ${output("${branch.name}.beastmask.lsq6.mnc")}
     """
+    exec """
+    mincresample -clobber -tfm_input_sampling
+    -transform ${output("${branch.name}.lsq6.xfm")}
+    ${branch.name}.beastextract.mnc ${output("${branch.name}.beastextract.lsq6.mnc")}
+    """
 }
 
 beastnormalize = {

@@ -1,5 +1,5 @@
 #!/bin/bash
-#bpipe-batch is a program intended to wrap bpipe for use on the scinet gpc cluster
+#bpipe-batch is a program intended to wrap bpipe for use on the Niagara cluster
 #Invocation:
 #bpipe-batch.sh /path/to/my/pipeline <list of inputs> | qbatch -N bpipe-mycohort --chunksize 1 --walltime=5:00:00 -
 #It should be invoked in the directory that will contain the output
@@ -19,6 +19,6 @@ done
 n=0
 while read -r line
 do
-  echo "mkdir -p run-${n}; cd run-${n}; bpipe run -n 8 -m 13930 ${pipeline} ${line}"
+  echo "mkdir -p run-${n}; cd run-${n}; bpipe run -n 80 ${pipeline} ${line}"
   ((++n))
-done < <(xargs -n 4 <<< ${abspathlist})
+done < <(xargs -n 40 <<< ${abspathlist})
