@@ -21,4 +21,4 @@ while read -r line
 do
   echo "mkdir -p run-${n}; cd run-${n}; bpipe run -n 80 ${pipeline} ${line}"
   ((++n))
-done < <(xargs -n 40 <<< ${abspathlist})
+done < <(xargs -n 20 <<< ${abspathlist})
