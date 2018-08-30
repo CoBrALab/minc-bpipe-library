@@ -26,7 +26,7 @@ Once you have defined your stages, you can run your pipeline on the SGE cluster 
 > module load bpipe #needed to run bpipe
 > module load minc-toolkit minc-toolkit-extras #needed for most stages
 > cd /path/to/store/outputs
-#Choose n to be the smaller of (4, 240)
+#Choose n to be the smaller of, (number of subjects, 240), minimum 4 regardless of subject number
 > bpipe run -n<number> /path/to/pipeline.bpipe /path/to/inputs/*mnc
 ```
 
