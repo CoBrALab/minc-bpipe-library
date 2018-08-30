@@ -169,103 +169,6 @@ cutneckapplyautocrop = {
     branch.name = "${branch.name}.cutneckapplyautocrop"
 }
 
-rigid_register = {
-    //Rigidly registers brain to a given model
-    //Not used in the registration chain anymore
-    //May be used for other purposes
-    //Requires minc-toolkit
-    branch.nativemnc = "$input.mnc"
-    exec """
-    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
-    mincANTS 3 -m MI[$input.mnc,${REGISTRATIONMODEL},1,32]
-     -i 0
-     -o $output.xfm
-     --number-of-affine-iterations 10000x10000x10000x10000x10000
-     --MI-option 32x32000
-     --use-Histogram-Matching
-     --do-rigid true
-     --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4
-    """
-}
-
-rough_register = {
-    //Roughly registers brain to a given model
-    //Requires minc-toolkit
-    branch.nativemnc = "$input.mnc"
-    exec """
-    bestlinreg.pl -lsq12 ${REGISTRATIONMODEL} $input.mnc $output.xfm
-    """
-}
-
-affine_register = {
-    //Affinely registers brain to a given model
-    //Uses rough transformation passed from previous stage
-    //Uses head mask for model
-    //Mask must be in "fixed" space, so this registrion must be setup backwards
-    //Requires minc-toolkit
-    exec """
-    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
-    mincANTS 3 -m MI[${REGISTRATIONMODEL},$input.mnc,1,32]
-     -i 0
-     -x ${REGISTRATIONHEADMASK}
-     -o $output.xfm
-     --number-of-affine-iterations 10000x10000x10000x10000x10000
-     --MI-option 32x32000
-     --use-Histogram-Matching
-     --affine-gradient-descent-option 0.5x0.95x1.e-4x1.e-4
-     --initial-affine $input.xfm
-    """
-}
-
-affine_register_masked = {
-    //Affinely registers brain to a given model
-    //Transforms brain to model space
-    //Uses affine regstration passed from previous stage
-    //Uses brain mask for model
-    //Mask must be in "fixed" space, so this registration must be setup backwards
-    //Requires minc-toolkit
-    exec """
-    ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
-    mincANTS 3 -m MI[${REGISTRATIONMODEL},$input.mnc,1,64]
-     -i 0
-     -x ${REGISTRATIONBRAINMASK}
-     -o $output.xfm
-     --number-of-affine-iterations 10000x10000x10000x10000x10000
-     --MI-option 64x64000
-     --use-Histogram-Matching
-     --initial-affine $input.xfm
-    """
-
-    exec """
-    mincresample -verbose -clobber -2 -short -unsigned
-    -like ${REGISTRATIONMODEL}
-    -transform ${output.xfm.prefix}_inverse.xfm
-    $input.mnc $output.mnc
-    """
-}
-
-linear_antsRegistration = {
-    //Multi-stage registration of input brain to model space
-    branch.nativemnc = "$input.mnc"
-    uses(GB:1.75) {
-    exec """
-    antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --minc --write-composite-transform --verbose
-    --output $output.xfm.prefix
-    --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
-    --initial-moving-transform [${REGISTRATIONMODEL},$input.mnc,1]
-    --transform Rigid[0.5] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.3] --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 10x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
-    --transform Affine[0.1] --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,64] --convergence [2000x2000x2000x2000,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 4x2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL]
-    """
-    }
-
-    exec """
-    itk_resample --clobber --order 3 --short
-    --like ${REGISTRATIONMODEL}
-    --transform ${output.xfm.prefix}_inverse.xfm
-    $input.mnc $output.mnc
-    """
-}
-
 linear_bestlinreg = {
     //Two target bestlinreg
     branch.nativemnc = "$input.mnc"
@@ -274,7 +177,6 @@ linear_bestlinreg = {
     xfminvert ${output.xfm.prefix}_inverse.xfm $output.xfm &&
     bestlinreg_g -noverbose -clobber -nmi -lsq12 -source_mask ${REGISTRATIONANTIMASK} ${REGISTRATIONMODEL} $input.mnc ${output.xfm.prefix}_ICV.xfm
     """
-
 
     exec """
     tmpdir=`mktemp -d` &&
@@ -315,34 +217,6 @@ extract_DBM = {
     """
     exec """
     CreateJacobianDeterminantImage 3 ${branch.nonlinmnc}0_inverse_NL_grid_0.mnc ${output("${branch.nonlinmnc}_log_determinant.mnc")} 1 0
-    """
-}
-
-linear_antsRegistration_twotarget = {
-    //Multi-stage registration of input brain to model space with two targets
-    branch.nativemnc = "$input.mnc"
-    uses(GB:3) {
-    exec """
-    antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --minc --write-composite-transform --verbose
-    --output $output.xfm.prefix
-    --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
-    --initial-moving-transform [${REGISTRATIONMODEL},$input.mnc,1]
-    --transform Rigid[0.5]
-    --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Random,0.3]
-    --metric Mattes[${REGISTRATIONMODEL2},$input.mnc,1,32,Random,0.3]
-    --convergence [2000x2000x2000x2000x0,1e-6,10] --shrink-factors 10x8x4x2x1 --smoothing-sigmas 4x3x2x1x0vox --masks [NULL,NULL]
-    --transform Affine[0.1]
-    --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,64,Random,0.5]
-    --metric Mattes[${REGISTRATIONMODEL2},$input.mnc,1,64,Random,0.5]
-    --convergence [2000x2000x2000x2000,1e-6,10] --shrink-factors 8x4x2x1 --smoothing-sigmas 4x2x1x0vox --masks [${REGISTRATIONBRAINMASK},NULL]
-    """
-    }
-
-    exec """
-    itk_resample --clobber --order 3 --short
-    --like ${REGISTRATIONMODEL}
-    --transform ${output.xfm.prefix}_inverse.xfm
-    $input.mnc $output.mnc
     """
 }
 
@@ -452,10 +326,6 @@ extractvbm = {
             "smooth_mask -binvalue 3 -fwhm 10 ${input.mnc} $output.wm.mnc"
 }
 
-linear_register = segment {
-    //Multi-stage registration to a model
-    rough_register + affine_register + affine_register_masked
-}
 
 beast = segment {
     //Runs the beast brain extraction toolchain
