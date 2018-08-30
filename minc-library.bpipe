@@ -85,17 +85,9 @@ n4correct = {
     branch.name = "${branch.name}.n4correct"
     //Runs the improved n3correct aka N4correct
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
-    //Correction is done with a mask as per http://dx.doi.org/10.1016/j.neuroimage.2007.10.026
-    //Big mess of steps here
-    //Do a whole-scan iteration
-    //Find a rough brain mask
-    //Correct again with brain mask
-    //Do WM/GM classification
-    //Correct again
-    //Repeat 2 more times
-    uses(GB:3,threads:8) {
+    uses(GB:3,threads:4) {
     exec """
-    iterativeN4_2.sh $input.mnc $output.mnc
+    iterativeN4_multispectral.sh $output.mnc $input.mnc
     ""","n4correct"
     }
 }
@@ -109,7 +101,7 @@ n4correctsimple = {
     tmpdir=`mktemp -d`
 
     minccalc -expression 'A[0]?1:1' $input.mnc \$tmpdir/mask.mnc
-    minccalc -expression 'A[0]>0.5?1:0' $input.mnc \$tmpdir/weight.mnc
+    ImageMath 3 \$tmpdir/weight.mnc ThresholdAtMean $input.mnc 1
 
     N4BiasFieldCorrection -d 3 -s 2 -b [200] -c [300x300x300x300,0.0] -i $input.mnc -o $output.mnc -x \$tmpdir/mask.mnc -w \$tmpdir/weight.mnc --histogram-sharpening [0.05,0.01,200]
     ""","n4correct"
