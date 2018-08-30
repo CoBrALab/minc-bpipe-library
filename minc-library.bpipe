@@ -2,9 +2,6 @@ BEASTMODEL_DIR="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sy
 BEASTMODEL_NAME="mni_icbm152_t1_tal_nlin_sym_09c"
 BEASTLIBRARY_DIR="${System.getenv().QUARANTINE_PATH}/resources/BEaST_libraries/combined"
 
-//Model which has a headmask, must correspond to the same space as MNIMODEL
-CUTNECKMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
-
 //Model which has a facemask, must correspond to the same space as MNIMODEL
 DEFACEMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
 
@@ -147,7 +144,7 @@ cutneckapplyautocrop = {
     //Alternative implementation of cutneck which applies via autocrop in native space
     //Applies model mask to subject brain in model space
     exec """
-    minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${CUTNECKMODEL}_headmask_D.mnc $input.mnc $output.mnc
+    minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${REGISTRATIONHEADMASK} $input.mnc $output.mnc
     """
 
     forward output.mnc
@@ -157,7 +154,7 @@ cutneckapplyautocrop = {
     itk_resample --clobber --labels --byte
     --like ${nativemnc}
     --transform $input.xfm
-    ${CUTNECKMODEL}_headmask_D.mnc ${output("${branch.name}.headmask.mnc")}
+    ${REGISTRATIONHEADMASK} ${output("${branch.name}.headmask.mnc")}
     """
 
     exec """
