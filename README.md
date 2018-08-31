@@ -24,7 +24,7 @@ Once you have defined your stages, you can run your pipeline on the SGE cluster 
 > git clone https://github.com/CobraLab/minc-bpipe-library.git
 #Edit minc-bpipe-library/pipeline.bpipe as you see fit
 > module load bpipe #needed to run bpipe
-> module load minc-toolkit minc-toolkit-extras #needed for most stages
+> module load minc-toolkit minc-toolkit-extras ANTs/git #needed for most stages
 > cd /path/to/store/outputs
 #Choose n to be the smaller of, (number of subjects, 240), minimum 4 regardless of subject number
 > bpipe run -n<number> /path/to/pipeline.bpipe /path/to/inputs/*mnc
@@ -74,7 +74,7 @@ Steps
 > git clone https://github.com/CobraLab/minc-bpipe-library.git
 > rm minc-bpipe-library/bpipe.config
 > mkdir bpipe-outputs && cd bpipe-outputs
-> module load intel/2018.2 openblas/0.2.20 gsl/2.4 minc-toolkit/1.9.16 minc-toolkit-extras/1.9.16 gnu-parallel qbatch/git java bpipe
+> module load intel/2018.2 openblas/0.2.20 gsl/2.4 minc-toolkit/1.9.16 minc-toolkit-extras/1.9.16 gnu-parallel qbatch/git java bpipe ANTs/ANTs/20180814
 > ../minc-bpipe-library/bpipe-batch.sh ../minc-bpipe-library/pipeline.bpipe /path/to/my/inputs/*.mnc > joblist #to generate a joblist
 > qbatch -N myjobname --chunksize 1 --walltime=8:00:00 joblist #to submit jobs to Niagara queing system
 ```
