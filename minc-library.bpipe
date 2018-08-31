@@ -362,13 +362,13 @@ defaceapply = {
 deface = segment {
     //Linear registers brain to MNI space
     //Applies inverse facemask to MRI data
-    linear_register + defaceapply
+    linear_bestlinreg + defaceapply
 }
 
 cutneck = segment {
     //Linearly registers brain to MNI space
     //Applies neckmask to MRI data
-    linear_register + cutneckapplyautocrop
+    linear_bestlinreg + cutneckapplyautocrop
 }
 
 resample = {
