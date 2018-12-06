@@ -50,6 +50,7 @@ This container provides minc-bpipe-library
 ### get minc-to-bpipe 
   cd /
   git clone https://github.com/CobraLab/minc-bpipe-library.git
+  rm -rf /minc-bpipe-library/bpipe.config
  
 %environment
   PATH=/bpipe/bin:$PATH
