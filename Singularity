@@ -39,48 +39,20 @@ This container provides minc-bpipe-library
   pip install qbatch 
   pip install future
 
-### Install latest verion of cmake
-  #apt remove cmake -y
-  #apt purge --auto-remove cmake
-
-  version=3.12
-  build=3
-  mkdir ~/temp
-  cd ~/temp
-  wget https://cmake.org/files/v$version/cmake-$version.$build.tar.gz
-  tar -xzvf cmake-$version.$build.tar.gz
-  cd cmake-$version.$build/
-  ./bootstrap
-  make 
-  make install 
-
-### Install Minc-stuffs
-  git clone --recursive https://github.com/Mouse-Imaging-Centre/minc-stuffs.git /minc-stuffs && \
-  cd /minc-stuffs                                                                            && \
-  ./autogen.sh                                                                                 && \
-  ./configure --prefix=/opt CPPFLAGS="-I/usr/include/hdf5/serial -I/opt/minc/1.0.09/include" LDFLAGS="-L/opt/minc/1.0.09/lib -L/usr/lib/hdf5/serial" &&\
-  make                                                                                       && \
-  make install                                                                               && \
-  python setup.py install
-
-### Install ANTs
-  cd /
-  git clone https://github.com/ANTsX/ANTs.git
- 
-  mkdir /bin/ants
-  cd /bin/ants
-  cmake /ANTs
-  make 
-   
 ### Install Bpipe
   export TERM=dumb
   cd / 
-  git clone https://github.com/ssadedin/bpipe.git
+  #git clone https://github.com/ssadedin/bpipe.git
+  wget -P /tmp http://download.bpipe.org/versions/bpipe-0.9.9.6.tar.gz ; tar -xvzf /tmp/bpipe-0.9.9.6.tar.gz ; rm -rf /tmp/bpipe-0.9.9.6.tar.gz 
+  ln -sf /bpipe-0.9.9.6 /bpipe
   cd /bpipe
-  ./gradlew clean jar
+
+### get minc-to-bpipe 
+  cd /
+  git clone https://github.com/CobraLab/minc-bpipe-library.git
  
 %environment
-  PATH=/bin/ants/bin:/bpipe/bin:$PATH
+  PATH=/bpipe/bin:$PATH
 
 %runscript
 
