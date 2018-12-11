@@ -173,6 +173,26 @@ linear_bestlinreg = {
     //Two target bestlinreg
     branch.nativemnc = "$input.mnc"
     exec """
+    bestlinreg_g -noverbose -clobber -nmi -lsq12 -target_mask ${REGISTRATIONBRAINMASK} $input.mnc ${REGISTRATIONMODEL} ${output.xfm.prefix}_inverse.xfm &&
+    xfminvert ${output.xfm.prefix}_inverse.xfm $output.xfm &&
+    bestlinreg_g -noverbose -clobber -nmi -lsq12 -source_mask ${REGISTRATIONANTIMASK} ${REGISTRATIONMODEL} $input.mnc ${output.xfm.prefix}_ICV.xfm
+    """
+
+    exec """
+    tmpdir=`mktemp -d` &&
+    itk_resample --clobber --order 3
+    --like ${REGISTRATIONMODEL}
+    --transform ${output.xfm.prefix}_inverse.xfm
+    $input.mnc \$tmpdir/trasnformed.mnc &&
+    mincmath -clamp -const2 0 \$(mincstats -quiet -max \$tmpdir/trasnformed.mnc) \$tmpdir/trasnformed.mnc $output.mnc &&
+    rm -r \$tmpdir
+    """
+}
+
+linear_bestlinreg_twotarget = {
+    //Two target bestlinreg
+    branch.nativemnc = "$input.mnc"
+    exec """
     bestlinreg_g -noverbose -clobber -nmi -lsq12 -target_mask ${REGISTRATIONBRAINMASK} -sec_target ${REGISTRATIONMODEL2} $input.mnc ${REGISTRATIONMODEL} ${output.xfm.prefix}_inverse.xfm &&
     xfminvert ${output.xfm.prefix}_inverse.xfm $output.xfm &&
     bestlinreg_g -noverbose -clobber -nmi -lsq12 -source_mask ${REGISTRATIONANTIMASK} ${REGISTRATIONMODEL} $input.mnc ${output.xfm.prefix}_ICV.xfm
@@ -188,6 +208,7 @@ linear_bestlinreg = {
     rm -r \$tmpdir
     """
 }
+
 
 nonlinear_antsRegistration = {
     //Nonlinearly registers brain to a given model
