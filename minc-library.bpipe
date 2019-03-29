@@ -35,11 +35,6 @@ REGISTRATIONANTIMASK="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_n
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
 
-//Tagfile for VBM statistics
-VBMTAGDIR="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2"
-VBMTAGFILE="mni_icbm152_t1_tal_nlin_sym_09c_ntags_1000_prob_90_nobg.tag"
-VBMBGTAGFILE="mni_icbm152_t1_tal_nlin_sym_09c_ntags_1000_bg.tag"
-
 
 mincconvert = {
     branch.name = "${branch.name}.mincconvert"
@@ -135,11 +130,6 @@ pol_normalize = {
     """
 }
 
-inormalize = {
-    //Performal normalization against a model using inormalize (normalize_mri)
-}
-
-
 cutneckapplyautocrop = {
     //Alternative implementation of cutneck which applies via autocrop in native space
     //Applies model mask to subject brain in model space
@@ -186,58 +176,6 @@ linear_bestlinreg = {
     $input.mnc \$tmpdir/trasnformed.mnc &&
     mincmath -clamp -const2 0 \$(mincstats -quiet -max \$tmpdir/trasnformed.mnc) \$tmpdir/trasnformed.mnc $output.mnc &&
     rm -r \$tmpdir
-    """
-}
-
-linear_bestlinreg_twotarget = {
-    //Two target bestlinreg
-    branch.nativemnc = "$input.mnc"
-    exec """
-    bestlinreg_g -noverbose -clobber -nmi -lsq12 -target_mask ${REGISTRATIONBRAINMASK} -sec_target ${REGISTRATIONMODEL2} $input.mnc ${REGISTRATIONMODEL} ${output.xfm.prefix}_inverse.xfm &&
-    xfminvert ${output.xfm.prefix}_inverse.xfm $output.xfm &&
-    bestlinreg_g -noverbose -clobber -nmi -lsq12 -source_mask ${REGISTRATIONANTIMASK} ${REGISTRATIONMODEL} $input.mnc ${output.xfm.prefix}_ICV.xfm
-    """
-
-    exec """
-    tmpdir=`mktemp -d` &&
-    itk_resample --clobber --order 3
-    --like ${REGISTRATIONMODEL}
-    --transform ${output.xfm.prefix}_inverse.xfm
-    $input.mnc \$tmpdir/trasnformed.mnc &&
-    mincmath -clamp -const2 0 \$(mincstats -quiet -max \$tmpdir/trasnformed.mnc) \$tmpdir/trasnformed.mnc $output.mnc &&
-    rm -r \$tmpdir
-    """
-}
-
-
-nonlinear_antsRegistration = {
-    //Nonlinearly registers brain to a given model
-    //Transforms brain to model space
-    //Uses affine regstration passed from previous stage
-    //Uses brain mask for model
-    //Mask must be in "fixed" space, so this registration must be setup backwards
-    //Requires minc-toolkit
-    branch.nonlinmnc="${input.mnc.prefix}.nonlinear_register"
-
-    exec """
-    antsRegistration --dimensionality 3 --float 0 --collapse-output-transforms 1 --verbose --minc
-    --output $branch.nonlinmnc
-    --winsorize-image-intensities [0.01,0.99] --use-histogram-matching 1
-    --transform SyN[0.1,3,0] --metric CC[$input.mnc,${REGISTRATIONMODEL},1,4]
-    --convergence [500x250x100x100x25,1e-6,10] --shrink-factors 8x6x4x2x1 --smoothing-sigmas 6x4x2x1x0mm
-    #${output("${branch.nonlinmnc}0_inverse_NL.xfm")}"
-    ""","nonlinear_register"
-
-    forward input.mnc
-    branch.nonlintransform = "${branch.nonlinmnc}0_inverse_NL.xfm"
-}
-
-extract_DBM = {
-    exec """
-    CreateJacobianDeterminantImage 3 ${branch.nonlinmnc}0_inverse_NL_grid_0.mnc ${output("${branch.nonlinmnc}_determinant.mnc")} 0 0
-    """
-    exec """
-    CreateJacobianDeterminantImage 3 ${branch.nonlinmnc}0_inverse_NL_grid_0.mnc ${output("${branch.nonlinmnc}_log_determinant.mnc")} 1 0
     """
 }
 
@@ -324,30 +262,6 @@ beastextract = {
 
 }
 
-classify_clean = {
-    //Classifies brain matter into white/gray/csf
-    //Requires registered brain and mask
-    //Requires minc-toolkit
-    exec """
-    classify_clean
-    -tagdir ${VBMTAGDIR}
-    -tagfile ${VBMTAGFILE}
-    -bgtagfile ${VBMBGTAGFILE}
-    -mask $input.mnc
-    -mask_source -clean_tags -clobber
-    ${branch.modelmnc}.mnc $output.mnc
-    """
-}
-
-extractvbm = {
-    //Extracts white/grey/csf from classified brain
-    //Requires minc-toolkit
-    multi   "smooth_mask -binvalue 1 -fwhm 10 ${input.mnc} $output.csf.mnc",
-            "smooth_mask -binvalue 2 -fwhm 10 ${input.mnc} $output.gm.mnc",
-            "smooth_mask -binvalue 3 -fwhm 10 ${input.mnc} $output.wm.mnc"
-}
-
-
 beast = segment {
     //Runs the beast brain extraction toolchain
     //Requires models defined in $BEASTMODEL_DIR, $BEASTMODEL_NAME and a library in $BEASTLIBRARY_DIR
@@ -355,10 +269,6 @@ beast = segment {
     //Now registers the brain to MNI space first using mincANTS
     //http://www.ncbi.nlm.nih.gov/pubmed/21945694
     beastnormalize + beastmask + beastextract
-}
-
-VBM = segment {
-    beast + classify_clean + extractvbm
 }
 
 defaceapply = {
@@ -446,8 +356,4 @@ QC = {
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
 	n4correct + linear_bestlinreg + cutneckapplyautocrop + beast + QC + resample_to_lsq6_space
-}
-
-dbm = segment {
-    clean_and_center + n4correct + linear_bestlinreg + cutneckapplyautocrop + nonlinear_antsRegistration + extract_DBM
 }
