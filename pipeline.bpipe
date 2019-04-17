@@ -1,6 +1,6 @@
 load "minc-library.bpipe"
 
 run {
- "%.mnc" * [preprocess]
+ "%" * [preprocess]
 }
 

@@ -35,6 +35,29 @@ REGISTRATIONANTIMASK="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_n
 //Model to normalize intensity against
 //NORMALIZEMODEL="/path/to/model.mnc"
 
+convert = {
+  branch.name = "${branch.name}.convert"
+
+  if(file(input).name.endsWith('.mnc')) {
+        exec """
+            mincconvert -2 -clobber -compress 9 $input.mnc $output.mnc
+        """
+  }
+  else
+  if(file(input).name.endsWith('.nii.gz')) {
+      transform('.nii.gz') to('.mnc') {
+      exec """
+          nii2mnc -clobber $input.nii.gz $output.mnc
+      """
+      }
+  }
+  else
+  if(file(input).name.endsWith('.nii')) {
+      exec """
+          nii2mnc -clobber $input.nii $output.mnc
+      """
+  }
+}
 
 mincconvert = {
     branch.name = "${branch.name}.mincconvert"
