@@ -45,29 +45,20 @@ convert = {
   }
   else
   if(file(input).name.endsWith('.nii.gz')) {
-      transform('.nii.gz') to('.mnc') {
+      transform('.nii.gz') to('.convert.mnc') {
       exec """
-          nii2mnc -clobber $input.nii.gz $output.mnc
+          nii2mnc -clobber $input $output.mnc
       """
       }
   }
   else
   if(file(input).name.endsWith('.nii')) {
+      transform('.nii') to('.convert.mnc') {
       exec """
-          nii2mnc -clobber $input.nii $output.mnc
+          nii2mnc -clobber $input $output.mnc
       """
+      }
   }
-}
-
-mincconvert = {
-    branch.name = "${branch.name}.mincconvert"
-    //Runs mincconvert to make minc2 files
-    //minc2 files are requied for some stages
-    //This should be run first if files are minc1
-    //Requires minc-toolkit
-    exec """
-    mincconvert -2 -clobber -compress 9 $input.mnc $output.mnc
-    """
 }
 
 n3correct = {
@@ -378,5 +369,5 @@ QC = {
 
 preprocess = segment {
 	//Default best-practices preprocessing pipeline to run on all data
-	n4correct + linear_bestlinreg + cutneckapplyautocrop + beast + QC + resample_to_lsq6_space
+	convert + n4correct + linear_bestlinreg + cutneckapplyautocrop + beast + QC + resample_to_lsq6_space
 }
