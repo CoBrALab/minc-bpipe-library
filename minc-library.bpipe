@@ -106,7 +106,7 @@ n4correctsimple = {
     exec """
     tmpdir=`mktemp -d`
 
-    minccalc -expression 'A[0]?1:1' $input.mnc \$tmpdir/mask.mnc
+    minccalc -unsigned -byte -expression '1' $input.mnc \$tmpdir/mask.mnc
     ImageMath 3 \$tmpdir/weight.mnc ThresholdAtMean $input.mnc 1
 
     N4BiasFieldCorrection -d 3 -s 2 -b [200] -c [300x300x300x300,0.0] -i $input.mnc -o $output.mnc -x \$tmpdir/mask.mnc -w \$tmpdir/weight.mnc --histogram-sharpening [0.05,0.01,200]
@@ -131,7 +131,7 @@ nuyl_normalize = {
     //Requires NORMALIZEMODEL to be set to a reference mnc (atlas perhaps?)
     //See http://www.ncbi.nlm.nih.gov/pubmed/10784285
     exec """
-    minc_nuyl --verbose --fix_zero_padding $input.mnc ${NORMALIZEMODEL} $output.mnc
+    minc_nuyl --verbose --fix_zero_padding --source-mask ${NORMALIZEMODELMASK} --target_mask ${branch.nativemnc}.beastnormalize.mnc $input.mnc ${NORMALIZEMODEL} $output.mnc
     """
 }
 
@@ -140,7 +140,7 @@ pol_normalize = {
     //Requires NORMALIZEMODEL to be set to a reference mnc (atlas perhaps?)
     //
     exec """
-    volume_pol --verbose --clobber --order 1 --min 0 --max 65535 $input.mnc ${NORMALIZEMODEL} $output.mnc
+    volume_pol --verbose --clobber --order 1 --source_mask ${NORMALIZEMODELMASK} --target_mask ${branch.nativemnc}.beastnormalize.mnc $input.mnc ${NORMALIZEMODEL} $output.mnc
     """
 }
 
@@ -148,7 +148,7 @@ cutneckapplyautocrop = {
     //Alternative implementation of cutneck which applies via autocrop in native space
     //Applies model mask to subject brain in model space
     exec """
-    minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${REGISTRATIONHEADMASK} $input.mnc $output.mnc
+    minccalc -2 -short -unsigned -clobber -expression 'A[0]*A[1]' ${REGISTRATIONHEADMASK} $input.mnc $output.mnc
     """
 
     forward output.mnc
@@ -162,7 +162,7 @@ cutneckapplyautocrop = {
     """
 
     exec """
-    minccalc -2 -short -unsigned -clobber -expression A[0]*A[1] ${nativemnc} ${output("${branch.name}.headmask.mnc")} ${output("${branch.name}.cutneck.mnc")}
+    minccalc -2 -short -unsigned -clobber -expression 'A[0]*A[1]' ${nativemnc} ${output("${branch.name}.headmask.mnc")} ${output("${branch.name}.cutneck.mnc")}
     """
 
     //Applies calculates bounding box from data
@@ -245,7 +245,7 @@ beastextract = {
 
     //Apply brain mask to original registered brain
     exec """
-    minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] $input.mnc ${branch.modelmnc}.mnc ${output("${branch.modelmnc}.beastextract.mnc")}
+    minccalc -2 -short -unsigned -verbose -clobber -expression 'A[0]*A[1]' $input.mnc ${branch.modelmnc}.mnc ${output("${branch.modelmnc}.beastextract.mnc")}
     """
 
     forward input.mnc
@@ -261,7 +261,7 @@ beastextract = {
     //Apply brain mask to subject brain in native space
     exec """
     tmpdir=`mktemp -d` &&
-    minccalc -2 -short -unsigned -verbose -clobber -expression A[0]*A[1] ${nativemnc}  ${output("${branch.name}.beastmask.mnc")} \$tmpdir/extracted.mnc &&
+    minccalc -2 -short -unsigned -verbose -clobber -expression 'A[0]*A[1]' ${nativemnc}  ${output("${branch.name}.beastmask.mnc")} \$tmpdir/extracted.mnc &&
     autocrop -isoexpand 10mm -bbox \$tmpdir/extracted.mnc \$tmpdir/extracted.mnc ${output("${branch.name}.beastextract.mnc")} &&
     rm -r \$tmpdir
     """
@@ -280,7 +280,6 @@ beast = segment {
     //Runs the beast brain extraction toolchain
     //Requires models defined in $BEASTMODEL_DIR, $BEASTMODEL_NAME and a library in $BEASTLIBRARY_DIR
     //Requires minc-toolkit
-    //Now registers the brain to MNI space first using mincANTS
     //http://www.ncbi.nlm.nih.gov/pubmed/21945694
     beastnormalize + beastmask + beastextract
 }
