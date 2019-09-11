@@ -36,18 +36,19 @@ REGISTRATIONANTIMASK="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_n
 //NORMALIZEMODEL="/path/to/model.mnc"
 
 convert = {
-  branch.name = "${branch.name}.convert"
 
   if(file(input).name.endsWith('.mnc')) {
+      transform('.mnc') to('.convert.mnc') {
         exec """
             mincconvert -2 -clobber -compress 9 $input.mnc $output.mnc
         """
+      }
   }
   else
   if(file(input).name.endsWith('.nii.gz')) {
       transform('.nii.gz') to('.convert.mnc') {
       exec """
-          nii2mnc -clobber $input $output.mnc
+          nii2mnc -clobber $input.nii.gz $output.mnc
       """
       }
   }
@@ -55,14 +56,14 @@ convert = {
   if(file(input).name.endsWith('.nii')) {
       transform('.nii') to('.convert.mnc') {
       exec """
-          nii2mnc -clobber $input $output.mnc
+          nii2mnc -clobber $input.nii $output.mnc
       """
       }
   }
+  branch.nativemnc = "${branch.name}".minus(".mnc").minus(".nii.gz").minus(".nii").concat(".convert")
 }
 
 n3correct = {
-    branch.name = "${branch.name}.n3correct"
     //Runs the nu_correct (aka n3correct) command with optimal settings according to
     //http://www.ncbi.nlm.nih.gov/pubmed/19559796
     //Requires minc-toolkit
