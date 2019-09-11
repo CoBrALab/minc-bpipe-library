@@ -71,7 +71,6 @@ n3correct = {
 }
 
 nlm_denoise = {
-    branch.name = "${branch.name}.nlm_denoise"
     //Runs non-local-means filter on data
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=4359947
     //This is probably only valid for very noise 3T, or most 1.5T data
@@ -80,7 +79,6 @@ nlm_denoise = {
 }
 
 anlm_denoise = {
-    branch.name = "${branch.name}.anlm_denoise"
     //Runs the "improved" adaptive non local means filter
     //http://onlinelibrary.wiley.com/doi/10.1002/jmri.22003/full
     //This is probably only valid for very noise 3T, or most 1.5T data
@@ -89,29 +87,29 @@ anlm_denoise = {
 }
 
 n4correct = {
-    branch.name = "${branch.name}.n4correct"
     //Runs the improved n3correct aka N4correct
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
     uses(GB:6,threads:4) {
     exec """
-    iterativeN4_multispectral.sh $output.mnc $input.mnc
+      iterativeN4_multispectral.sh $output.mnc $input.mnc
     ""","n4correct"
     }
+    branch.nativemnc = "${branch.nativemnc}.n4correct"
 }
 
 n4correctsimple = {
-    branch.name = "${branch.name}.n4correctsimple"
     //Runs the improved n3correct aka N4correct
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
     //Simple n4 done with a whole-scan mask for when internal otsu masking fails
     exec """
-    tmpdir=`mktemp -d`
+      tmpdir=`mktemp -d`
 
-    minccalc -unsigned -byte -expression '1' $input.mnc \$tmpdir/mask.mnc
-    ImageMath 3 \$tmpdir/weight.mnc ThresholdAtMean $input.mnc 1
+      minccalc -unsigned -byte -expression '1' $input.mnc \$tmpdir/mask.mnc
+      ImageMath 3 \$tmpdir/weight.mnc ThresholdAtMean $input.mnc 1
 
-    N4BiasFieldCorrection -d 3 -s 2 -b [200] -c [300x300x300x300,0.0] -i $input.mnc -o $output.mnc -x \$tmpdir/mask.mnc -w \$tmpdir/weight.mnc --histogram-sharpening [0.05,0.01,200]
+      N4BiasFieldCorrection -d 3 -s 2 -b [200] -c [300x300x300x300,0.0] -i $input.mnc -o $output.mnc -x \$tmpdir/mask.mnc -w \$tmpdir/weight.mnc --histogram-sharpening [0.05,0.01,200]
     ""","n4correct"
+    branch.nativemnc = "${branch.nativemnc}.n4correctsimple"
 }
 
 
@@ -120,10 +118,8 @@ dumb_normalize = {
     //Data is then scaled 0-65535 and stored in a sensible unsigned int format
     //Requires minc-toolkit
     exec """
-    minccalc -2 -short -unsigned -clobber -expression "A[0]<(0.01*\$(mincstats -quiet -max $input.mnc)) || A[0]>(0.99*\$(mincstats -quiet -max $input.mnc)) ? 0 : A[0]" $input.mnc $output.tmp
-    """
-    exec """
-    minccalc -2 -short -unsigned -clobber -expression "A[0]/\$(mincstats -quiet -max $output.tmp)*65535" $output.tmp $output.mnc
+      minccalc -clobber -expression "A[0]<(0.01*\$(mincstats -quiet -max $input.mnc)) || A[0]>(0.99*\$(mincstats -quiet -max $input.mnc)) ? 0 : A[0]" $input.mnc $output.tmp
+      minccalc -clobber -expression "A[0]/\$(mincstats -quiet -max $output.tmp)*65535" $output.tmp $output.mnc
     """
 }
 
@@ -132,7 +128,7 @@ nuyl_normalize = {
     //Requires NORMALIZEMODEL to be set to a reference mnc (atlas perhaps?)
     //See http://www.ncbi.nlm.nih.gov/pubmed/10784285
     exec """
-    minc_nuyl --verbose --fix_zero_padding --source-mask ${NORMALIZEMODELMASK} --target_mask ${branch.nativemnc}.beastnormalize.mnc $input.mnc ${NORMALIZEMODEL} $output.mnc
+      minc_nuyl --verbose --fix_zero_padding --source-mask ${NORMALIZEMODELMASK} --target_mask ${branch.nativemnc}.beastnormalize.mnc $input.mnc ${NORMALIZEMODEL} $output.mnc
     """
 }
 
@@ -141,56 +137,39 @@ pol_normalize = {
     //Requires NORMALIZEMODEL to be set to a reference mnc (atlas perhaps?)
     //
     exec """
-    volume_pol --verbose --clobber --order 1 --source_mask ${NORMALIZEMODELMASK} --target_mask ${branch.nativemnc}.beastnormalize.mnc $input.mnc ${NORMALIZEMODEL} $output.mnc
+      volume_pol --verbose --clobber --order 1 --source_mask ${NORMALIZEMODELMASK} --target_mask ${branch.nativemnc}.beastnormalize.mnc $input.mnc ${NORMALIZEMODEL} $output.mnc
     """
 }
 
 cutneckapplyautocrop = {
     //Alternative implementation of cutneck which applies via autocrop in native space
-    //Applies model mask to subject brain in model space
-    exec """
-    minccalc -2 -short -unsigned -clobber -expression 'A[0]*A[1]' ${REGISTRATIONHEADMASK} $input.mnc $output.mnc
-    """
-
-    forward output.mnc
+    forward input.mnc
 
     //Transforms model mask to native space
     exec """
-    itk_resample --clobber --labels --byte
-    --like ${nativemnc}
-    --transform $input.xfm
-    ${REGISTRATIONHEADMASK} ${output("${branch.name}.headmask.mnc")}
+      itk_resample --clobber --labels --byte
+        --like ${branch.nativemnc}.mnc
+        --transform $input.xfm
+        ${REGISTRATIONHEADMASK} ${output("${branch.nativemnc}.headmask.mnc")} &&
+      minccalc  -clobber -expression 'A[0]*A[1]' ${branch.nativemnc}.mnc ${output("${branch.nativemnc}.headmask.mnc")} ${output("${branch.nativemnc}.cutneck.mnc")} &&
+      autocrop -clobber -isoexpand 10mm -bbox ${output("${branch.nativemnc}.headmask.mnc")} ${output("${branch.nativemnc}.cutneck.mnc")} ${output("${branch.nativemnc}.cutneckapplyautocrop.mnc")}
     """
-
-    exec """
-    minccalc -2 -short -unsigned -clobber -expression 'A[0]*A[1]' ${nativemnc} ${output("${branch.name}.headmask.mnc")} ${output("${branch.name}.cutneck.mnc")}
-    """
-
-    //Applies calculates bounding box from data
-    exec """
-    autocrop -clobber -isoexpand 10mm -bbox ${output("${branch.name}.headmask.mnc")} ${output("${branch.name}.cutneck.mnc")} ${output("${branch.name}.cutneckapplyautocrop.mnc")}
-    """
-    branch.nativemnc = "${branch.name}.cutneckapplyautocrop.mnc"
-    branch.name = "${branch.name}.cutneckapplyautocrop"
+    branch.nativemnc = "${branch.nativemnc}.cutneckapplyautocrop"
 }
 
 linear_bestlinreg = {
     //Two target bestlinreg
-    branch.nativemnc = "$input.mnc"
     exec """
-    bestlinreg_g -noverbose -clobber -nmi -lsq12 -target_mask ${REGISTRATIONBRAINMASK} $input.mnc ${REGISTRATIONMODEL} ${output.xfm.prefix}_inverse.xfm &&
-    xfminvert ${output.xfm.prefix}_inverse.xfm $output.xfm &&
-    bestlinreg_g -noverbose -clobber -nmi -lsq12 -source_mask ${REGISTRATIONANTIMASK} ${REGISTRATIONMODEL} $input.mnc ${output.xfm.prefix}_ICV.xfm
-    """
-
-    exec """
-    tmpdir=`mktemp -d` &&
-    itk_resample --clobber --order 3
-    --like ${REGISTRATIONMODEL}
-    --transform ${output.xfm.prefix}_inverse.xfm
-    $input.mnc \$tmpdir/trasnformed.mnc &&
-    mincmath -clamp -const2 0 \$(mincstats -quiet -max \$tmpdir/trasnformed.mnc) \$tmpdir/trasnformed.mnc $output.mnc &&
-    rm -r \$tmpdir
+      tmpdir=`mktemp -d` &&
+      bestlinreg_g -noverbose -clobber -nmi -lsq12 -target_mask ${REGISTRATIONBRAINMASK} $input.mnc ${REGISTRATIONMODEL} ${output.xfm.prefix}_inverse.xfm &&
+      xfminvert -clobber ${output.xfm.prefix}_inverse.xfm $output.xfm &&
+      bestlinreg_g -noverbose -clobber -nmi -lsq12 -source_mask ${REGISTRATIONANTIMASK} ${REGISTRATIONMODEL} $input.mnc ${output.xfm.prefix}_ICV.xfm &&
+      itk_resample --clobber --order 3
+        --like ${REGISTRATIONMODEL}
+        --transform ${output.xfm.prefix}_inverse.xfm
+        $input.mnc \$tmpdir/transformed.mnc &&
+      mincmath -clobber -clamp -const2 0 \$(mincstats -quiet -max \$tmpdir/transformed.mnc) \$tmpdir/transformed.mnc $output.mnc &&
+      rm -r \$tmpdir
     """
 }
 
@@ -200,25 +179,19 @@ resample_to_lsq6_space = {
 
     //Clever descale command, extract the scale and shear values from lsq12 registration, invert, and apply to lsq12, result is a lsq6 which is pretty nice
     exec """
-    tmpdir=`mktemp -d`;
-    param2xfm \$(xfm2param ${input.xfm.prefix}_inverse.xfm | grep -E 'scale|shear') \$tmpdir/${branch.name}.scale.xfm;
-    xfminvert \$tmpdir/${branch.name}.scale.xfm \$tmpdir/${branch.name}.unscale.xfm;
-    xfmconcat ${input.xfm.prefix}_inverse.xfm \$tmpdir/${branch.name}.unscale.xfm ${output("${branch.name}.lsq6.xfm")}
-    """
-    exec """
-    mincresample -clobber -tfm_input_sampling
-    -transform ${output("${branch.name}.lsq6.xfm")}
-    ${branch.name}.mnc ${output("${branch.name}.lsq6.mnc")}
-    """
-    exec """
-    mincresample -clobber -tfm_input_sampling -byte -unsigned -keep_real_range
-    -transform ${output("${branch.name}.lsq6.xfm")}
-    ${branch.name}.beastmask.mnc ${output("${branch.name}.beastmask.lsq6.mnc")}
-    """
-    exec """
-    mincresample -clobber -tfm_input_sampling
-    -transform ${output("${branch.name}.lsq6.xfm")}
-    ${branch.name}.beastextract.mnc ${output("${branch.name}.beastextract.lsq6.mnc")}
+      tmpdir=`mktemp -d` &&
+      param2xfm \$(xfm2param ${input.xfm.prefix}_inverse.xfm | grep -E 'scale|shear') \$tmpdir/${branch.nativemnc}.scale.xfm &&
+      xfminvert \$tmpdir/${branch.nativemnc}.scale.xfm \$tmpdir/${branch.nativemnc}.unscale.xfm &&
+      xfmconcat ${input.xfm.prefix}_inverse.xfm \$tmpdir/${branch.nativemnc}.unscale.xfm ${output("${branch.nativemnc}.lsq6.xfm")} &&
+      mincresample -clobber -tfm_input_sampling
+        -transform ${output("${branch.nativemnc}.lsq6.xfm")}
+        ${branch.nativemnc}.mnc ${output("${branch.nativemnc}.lsq6.mnc")} &&
+      mincresample -clobber -tfm_input_sampling -byte -unsigned -keep_real_range
+        -transform ${output("${branch.nativemnc}.lsq6.xfm")}
+        ${branch.nativemnc}.beastmask.mnc ${output("${branch.nativemnc}.beastmask.lsq6.mnc")} &&
+      mincresample -clobber -tfm_input_sampling
+        -transform ${output("${branch.nativemnc}.lsq6.xfm")}
+        ${branch.nativemnc}.beastextract.mnc ${output("${branch.nativemnc}.beastextract.lsq6.mnc")}
     """
 }
 
@@ -228,10 +201,10 @@ beastnormalize = {
     //No registration or n3 since this is done in prior steps
     branch.modelmnc = "$input.mnc.prefix"
     exec """
-         tmpdir=`mktemp -d`;
-         minc_anlm $input.mnc \$tmpdir/${branch.name}.denoise.mnc &&
-         volume_pol --order 1 --min 0 --max 100 --noclamp  \$tmpdir/${branch.name}.denoise.mnc ${REGISTRATIONMODEL} --source_mask ${REGISTRATIONBRAINMASK} --target_mask ${REGISTRATIONBRAINMASK} --clobber $output.mnc
-         """
+      tmpdir=`mktemp -d`;
+      minc_anlm $input.mnc \$tmpdir/${branch.nativemnc}.denoise.mnc &&
+      volume_pol --order 1 --min 0 --max 100 --noclamp  \$tmpdir/${branch.nativemnc}.denoise.mnc ${REGISTRATIONMODEL} --source_mask ${REGISTRATIONBRAINMASK} --target_mask ${REGISTRATIONBRAINMASK} --clobber $output.mnc
+    """
 }
 
 beastmask = {
@@ -246,33 +219,29 @@ beastextract = {
 
     //Apply brain mask to original registered brain
     exec """
-    minccalc -2 -short -unsigned -verbose -clobber -expression 'A[0]*A[1]' $input.mnc ${branch.modelmnc}.mnc ${output("${branch.modelmnc}.beastextract.mnc")}
+      minccalc -verbose -clobber -expression 'A[0]*A[1]' ${branch.modelmnc}.mnc $input.mnc ${output("${branch.modelmnc}.beastextract.mnc")}
     """
 
     forward input.mnc
 
     //Transform brain mask to native space
     exec """
-    itk_resample --clobber --labels --byte
-    --like ${nativemnc}
-    --transform $input.xfm
-    $input.mnc ${output("${branch.name}.beastmask.mnc")}
-    """
-
-    //Apply brain mask to subject brain in native space
-    exec """
-    tmpdir=`mktemp -d` &&
-    minccalc -2 -short -unsigned -verbose -clobber -expression 'A[0]*A[1]' ${nativemnc}  ${output("${branch.name}.beastmask.mnc")} \$tmpdir/extracted.mnc &&
-    autocrop -isoexpand 10mm -bbox \$tmpdir/extracted.mnc \$tmpdir/extracted.mnc ${output("${branch.name}.beastextract.mnc")} &&
-    rm -r \$tmpdir
+      tmpdir=`mktemp -d` &&
+      itk_resample --clobber --labels --byte
+        --like ${branch.nativemnc}.mnc
+        --transform $input.xfm
+        $input.mnc ${output("${branch.nativemnc}.beastmask.mnc")} &&
+      minccalc -unsigned -verbose -clobber -expression 'A[0]*A[1]' ${branch.nativemnc}.mnc ${output("${branch.nativemnc}.beastmask.mnc")} \$tmpdir/extracted.mnc &&
+      autocrop -isoexpand 10mm -bbox \$tmpdir/extracted.mnc \$tmpdir/extracted.mnc ${output("${branch.nativemnc}.beastextract.mnc")} &&
+      rm -r \$tmpdir
     """
 
     //Generate a brainmatter mask for volume estimations
     exec """
-    tmpdir=`mktemp -d` &&
-    ThresholdImage 3 ${nativemnc} \$tmpdir/otsu.mnc Otsu 1 &&
-    ImageMath 3 ${output("${branch.name}.brainvolume.mnc")} m \$tmpdir/otsu.mnc ${output("${branch.name}.beastmask.mnc")} &&
-    rm -r \$tmpdir
+      tmpdir=`mktemp -d` &&
+      ThresholdImage 3 ${branch.nativemnc}.mnc \$tmpdir/otsu.mnc Otsu 1 &&
+      ImageMath 3 ${output("${branch.nativemnc}.brainvolume.mnc")} m \$tmpdir/otsu.mnc ${output("${branch.nativemnc}.beastmask.mnc")} &&
+      rm -r \$tmpdir
     """
 
 }
@@ -289,18 +258,15 @@ defaceapply = {
     //Applies the inverse face mask to the MRI volume
     //Expects the brain to be in MNI space
     exec """
-    minccalc -2 -short -unsigned -verbose -clobber -expression 'A[0]*(1 - A[1])' $input.mnc ${DEFACEMODEL}_face_mask_res.mnc $output.mnc
+      minccalc -verbose -clobber -expression 'A[0]*(1 - A[1])' $input.mnc ${DEFACEMODEL}_face_mask_res.mnc $output.mnc
     """
 
     exec """
-    itk_resample --clobber --labels --byte
-    --like ${nativemnc}
-    --transform $input.xfm
-    ${DEFACEMODEL}_face_mask_res.mnc ${output("${branch.name}.facemask.mnc")}
-    """
-
-    exec """
-    minccalc -2 -short -unsigned -verbose -clobber -expression 'A[0]*(1 - A[1])' ${nativemnc} ${output("${branch.name}.facemask.mnc")} ${output("${branch.name}.defaceapply.mnc")}
+      itk_resample --clobber --labels --byte
+        --like ${branch.nativemnc}.mnc
+        --transform $input.xfm
+        ${DEFACEMODEL}_face_mask_res.mnc ${output("${branch.nativemnc}.facemask.mnc")} &&
+        minccalc -verbose -clobber -expression 'A[0]*(1 - A[1])' ${branch.nativemnc}.mnc ${output("${branch.nativemnc}.facemask.mnc")} ${output("${branch.nativemnc}.defaceapply.mnc")}
     """
 }
 
@@ -316,53 +282,37 @@ cutneck = segment {
     linear_bestlinreg + cutneckapplyautocrop
 }
 
-resample = {
-    //Resamples minc volumes to unsigned shorts (16bit)
-    //Many buggy programs generate 32 or 64bit float minc volumes, these files
-    //are much larger, have numerical noise, and take longer to process
-    //This step should be run last
-    //NOTE: if using normalization to a model for registration the model
-    //should also be resampled
-    //Requires minc-tookit
-    exec """
-    mincresample -verbose -clobber -2 -short -unsigned $input.mnc $output.mnc
-    """
-}
-
 clean_and_center = {
     //Fixes a bunch of possible broken bits in MINC files
     //Requires minc-toolkit-extras
-    branch.name = "${branch.name}.clean_and_center"
-    exec """
-    clean_and_center_minc.pl $input.mnc $output.mnc
-    """
+    exec "clean_and_center_minc.pl $input.mnc $output.mnc"
+    branch.nativemnc = "${branch.nativemnc}.clean_and_center"
 }
 
 QC = {
     //Generates QC images
     output.dir="QC"
     exec """
-  tmpdir=\$(mktemp -d) &&
+      tmpdir=\$(mktemp -d) &&
 
-  create_verify_image \$tmpdir/t.rgb
-  -width 1920 -autocols 6 -autocol_planes t
-  -row ${branch.modelmnc}.beastnormalize.mnc color:gray
-  volume_overlay:$input.mnc:0.4:red volume_overlay:${REGISTRATIONOUTLINE}:1:blue &&
+      create_verify_image \$tmpdir/t.rgb
+        -width 1920 -autocols 6 -autocol_planes t
+        -row ${branch.modelmnc}.beastnormalize.mnc color:gray
+        volume_overlay:$input.mnc:0.4:red volume_overlay:${REGISTRATIONOUTLINE}:1:blue &&
 
-  create_verify_image \$tmpdir/s.rgb
-  -width 1920 -autocols 6 -autocol_planes s
-  -row ${branch.modelmnc}.beastnormalize.mnc color:gray
-  volume_overlay:$input.mnc:0.4:red volume_overlay:${REGISTRATIONOUTLINE}:1:blue &&
+      create_verify_image \$tmpdir/s.rgb
+        -width 1920 -autocols 6 -autocol_planes s
+        -row ${branch.modelmnc}.beastnormalize.mnc color:gray
+        volume_overlay:$input.mnc:0.4:red volume_overlay:${REGISTRATIONOUTLINE}:1:blue &&
 
-  create_verify_image \$tmpdir/c.rgb
-  -width 1920 -autocols 6 -autocol_planes c
-  -row ${branch.modelmnc}.beastnormalize.mnc color:gray
-  volume_overlay:$input.mnc:0.4:red volume_overlay:${REGISTRATIONOUTLINE}:1:blue &&
+      create_verify_image \$tmpdir/c.rgb
+        -width 1920 -autocols 6 -autocol_planes c
+        -row ${branch.modelmnc}.beastnormalize.mnc color:gray
+        volume_overlay:$input.mnc:0.4:red volume_overlay:${REGISTRATIONOUTLINE}:1:blue &&
 
-  convert -append \$tmpdir/*.rgb $output.jpg &&
+        convert -append \$tmpdir/*.rgb $output.jpg &&
 
-  rm -r $tmpdir
-
+        rm -r \$tmpdir
     """
 
 }
