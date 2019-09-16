@@ -70,6 +70,13 @@ Third, this pipeline heavily utilizes MINC tools and MNI templates, which all as
 files. If this is not the case, then processing will never succeed as registration cannot overcome such large misorientations.
 In order to resolve these issues, scans need to be properly converted into MINC, and may need flipping applied.
 
+# Which outputs should I use?
+
+If you are running default pipeline there are three files of interest for an input file `<basename>.(nii.gz,nii,mnc)`
+- `<basename>.convert.n4correct.cutneckapplyautocrop.mnc` -- the final T1 in native space, with skull, extra data and background removed, with bias field corrected
+- `<basename>.convert.n4correct.cutneckapplyautocrop.beastmask.mnc` -- the brain mask in native space
+- `<basename>.convert.n4correct.cutneckapplyautocrop.beastmask.mnc` -- the extracted T1 in native space, with bias field corrected
+
 # Niagara Operation
 
 Typically, bpipe would talk directly to the cluster queing system but due to the design of Niagara, instead we submit "local"
