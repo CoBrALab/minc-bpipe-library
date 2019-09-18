@@ -173,6 +173,55 @@ linear_bestlinreg = {
     """
 }
 
+linear_antsRegistration = {
+    exec """
+      tmpdir=`mktemp -d` &&
+      antsRegistration --dimensionality 3 --verbose --minc \
+        --output [\$tmpdir/reg] \
+        --use-histogram-matching 0 \
+        --initial-moving-transform [${REGISTRATIONMODEL},$input.mnc,1] \
+        --transform Translation[0.5] \
+        --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,32,Regular,0.5] \
+        --convergence [2025x2025x2025x2025x2025x2025,1e-6,10] \
+        --shrink-factors 16x15x14x13x12x11 \
+        --smoothing-sigmas 13.5891488046x12.7398270043x11.890505204x11.0411834037x10.1918616035x9.34253980317mm \
+        --masks [NOMASK,NOMASK] \
+        --transform Rigid[0.25] \
+        --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,37,Regular,0.5] \
+        --convergence [2025x2025x2025x2025x2025x2025,1e-6,10] \
+        --shrink-factors 13x12x11x10x9x8 \
+        --smoothing-sigmas 11.0411834037x10.1918616035x9.34253980317x8.49321800288x7.64389620259x6.7945744023mm \
+        --masks [NOMASK,NOMASK] \
+        --transform Similarity[0.125] \
+        --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,64,Regular,0.5] \
+        --convergence [2025x2025x2025x2025x2025x2025,1e-6,10] \
+        --shrink-factors 10x9x8x7x6x5 \
+        --smoothing-sigmas 8.49321800288x7.64389620259x6.7945744023x5.94525260202x5.09593080173x4.24660900144mm \
+        --masks [NOMASK,NOMASK] \
+        --transform Affine[0.1] \
+        --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,256,Regular,0.5] \
+        --convergence [2025x2025x2025x2025x2025x2025,1e-6,10] \
+        --shrink-factors 7x6x5x4x3x2 \
+        --smoothing-sigmas 5.94525260202x5.09593080173x4.24660900144x3.39728720115x2.54796540086x1.69864360058mm \
+        --masks [NOMASK,NOMASK] \
+        --transform Affine[0.1] \
+        --metric Mattes[${REGISTRATIONMODEL},$input.mnc,1,256,None] \
+        --convergence [2025x2025x2025x750x250,1e-6,20] \
+        --shrink-factors 4x3x2x1x1 \
+        --smoothing-sigmas 3.39728720115x2.54796540086x1.69864360058x0.849321800288x0mm \
+        --masks [${REGISTRATIONBRAINMASK},NOMASK] &&
+      xfminvert \$tmpdir/reg0_GenericAffine.xfm ${output.xfm.prefix}_inverse.xfm &&
+      mv -f \$tmpdir/reg0_GenericAffine.xfm $output.xfm &&
+      bestlinreg_g -noverbose -clobber -nmi -lsq12 -source_mask ${REGISTRATIONANTIMASK} ${REGISTRATIONMODEL} $input.mnc ${output.xfm.prefix}_ICV.xfm &&
+      itk_resample --clobber --order 3
+        --like ${REGISTRATIONMODEL}
+        --transform ${output.xfm.prefix}_inverse.xfm
+        $input.mnc \$tmpdir/transformed.mnc &&
+      mincmath -clobber -clamp -const2 0 \$(mincstats -quiet -max \$tmpdir/transformed.mnc) \$tmpdir/transformed.mnc $output.mnc &&
+      rm -r \$tmpdir
+    """
+}
+
 resample_to_lsq6_space = {
     //Must be run as the last stage, resamples all the useful files (brains and masks) to lsq6 space with the target model
     output.dir="lsq6"
