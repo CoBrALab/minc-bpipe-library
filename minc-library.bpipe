@@ -17,9 +17,9 @@ REGISTRATIONMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin
 
 //Optional second registration model for two-model registration
 //ADNI MNI MODEL
-REGISTRATIONMODEL2="${System.getenv().QUARANTINE_PATH}/resources/mni_adni/mni_adni_t1w_tal_nlin_asym.mnc"
+//REGISTRATIONMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_adni/mni_adni_t1w_tal_nlin_asym.mnc"
 //PEDIATRIC MNI MODEL
-//REGISTRATIONMODEL2="${System.getenv().QUARANTINE_PATH}/resources/nihpd_sym_all_minc2/nihpd_sym_04.5-18.5_t1w.mnc"
+//REGISTRATIONMODEL="${System.getenv().QUARANTINE_PATH}/resources/nihpd_sym_all_minc2/nihpd_sym_04.5-18.5_t1w.mnc"
 
 //Mask for masked registration
 REGISTRATIONBRAINMASK="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c_mask.mnc"
