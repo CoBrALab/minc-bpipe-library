@@ -62,6 +62,9 @@ interrupt some jobs, which causes the pipeline to stop.
 In general, this first step is always to retry running the job. Since bpipe is a pipeline tool it will not re-run completed
 stages and will continue where it left off previously. If the problems you had were intermittent then they will be resolved.
 
+One can check the logs (or just the errors) from a bpipe run from (inside the run directory) running the command ``bpipe log``
+or ``bpipe errors`` respectively.
+
 Secondly, if the pipeline is repeatedly failing somewhere in the middle, the next step is to inspect the intermediate outputs
 for indications of wrong "solutions". If this is the case, then you should trace back to the origin stage of the issue and
 examine if that stage can be tweaked/modified, for more help, contact CoBrALab.
