@@ -67,7 +67,8 @@ or ``bpipe errors`` respectively.
 
 Secondly, if the pipeline is repeatedly failing somewhere in the middle, the next step is to inspect the intermediate outputs
 for indications of wrong "solutions". If this is the case, then you should trace back to the origin stage of the issue and
-examine if that stage can be tweaked/modified, for more help, contact CoBrALab.
+examine if that stage can be tweaked/modified. This can be achieved by using minc-toolkit's ``Display`` program to examine
+the input file, as well as the output file from each stage, in comparison to a successful file.
 
 Third, this pipeline heavily utilizes MINC tools and MNI templates, which all assume a RAS, neurological orientation for all
 files. If this is not the case, then processing will never succeed as registration cannot overcome such large misorientations.
