@@ -68,6 +68,7 @@ n3correct = {
     //http://www.ncbi.nlm.nih.gov/pubmed/19559796
     //Requires minc-toolkit
     exec "nu_correct -verbose -clobber -iter 200 -shrink 2 -stop 0.000001 -fwhm 0.05 -distance 30 $input.mnc $output.mnc"
+    branch.nativemnc = "${branch.nativemnc}.n3correct"
 }
 
 nlm_denoise = {
@@ -76,6 +77,7 @@ nlm_denoise = {
     //This is probably only valid for very noise 3T, or most 1.5T data
     //Requires minc-toolkit
     exec "volume_denoise.pl $input.mnc $output.mnc --verbose --clobber"
+    branch.nativemnc = "${branch.nativemnc}.nlm_denoise"
 }
 
 anlm_denoise = {
@@ -84,6 +86,7 @@ anlm_denoise = {
     //This is probably only valid for very noise 3T, or most 1.5T data
     //Requires minc-toolkit
     exec "minc_anlm --rician --verbose $input.mnc $output.mnc"
+    branch.nativemnc = "${branch.nativemnc}.anlm_denoise"
 }
 
 n4correct = {
