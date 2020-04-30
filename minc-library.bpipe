@@ -5,6 +5,9 @@ BEASTLIBRARY_DIR="${System.getenv().QUARANTINE_PATH}/resources/BEaST_libraries/c
 //Model which has a facemask, must correspond to the same space as MNIMODEL
 DEFACEMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c"
 
+//We need a resample model so beast priors work (they're already in this space)
+RESAMPLEMODEL="${System.getenv().QUARANTINE_PATH}/resources/mni_icbm152_nlin_sym_09c_minc2/mni_icbm152_t1_tal_nlin_sym_09c.mnc"
+
 //Specify target linear registration model here options are
 //sym or asym
 //t1, t2, or pd
@@ -168,7 +171,7 @@ linear_bestlinreg = {
       xfminvert -clobber ${output.xfm.prefix}_inverse.xfm $output.xfm &&
       bestlinreg_g -noverbose -clobber -nmi -lsq12 -source_mask ${REGISTRATIONANTIMASK} ${REGISTRATIONMODEL} $input.mnc ${output.xfm.prefix}_ICV.xfm &&
       itk_resample --clobber --order 3
-        --like ${REGISTRATIONMODEL}
+        --like ${RESAMPLEMODEL}
         --transform ${output.xfm.prefix}_inverse.xfm
         $input.mnc \$tmpdir/transformed.mnc &&
       mincmath -clobber -clamp -const2 0 \$(mincstats -quiet -max \$tmpdir/transformed.mnc) \$tmpdir/transformed.mnc $output.mnc &&
@@ -217,7 +220,7 @@ linear_antsRegistration = {
       mv -f \$tmpdir/reg0_GenericAffine.xfm $output.xfm &&
       bestlinreg_g -noverbose -clobber -nmi -lsq12 -source_mask ${REGISTRATIONANTIMASK} ${REGISTRATIONMODEL} $input.mnc ${output.xfm.prefix}_ICV.xfm &&
       itk_resample --clobber --order 3
-        --like ${REGISTRATIONMODEL}
+        --like ${RESAMPLEMODEL}
         --transform ${output.xfm.prefix}_inverse.xfm
         $input.mnc \$tmpdir/transformed.mnc &&
       mincmath -clobber -clamp -const2 0 \$(mincstats -quiet -max \$tmpdir/transformed.mnc) \$tmpdir/transformed.mnc $output.mnc &&
