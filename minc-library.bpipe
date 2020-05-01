@@ -258,7 +258,7 @@ beastnormalize = {
     exec """
       tmpdir=`mktemp -d`;
       minc_anlm $input.mnc \$tmpdir/${branch.nativemnc}.denoise.mnc &&
-      volume_pol --order 1 --min 0 --max 100 --noclamp  \$tmpdir/${branch.nativemnc}.denoise.mnc ${REGISTRATIONMODEL} --source_mask ${REGISTRATIONBRAINMASK} --target_mask ${REGISTRATIONBRAINMASK} --clobber $output.mnc
+      volume_pol --order 1 --min 0 --max 100 --noclamp  \$tmpdir/${branch.nativemnc}.denoise.mnc ${RESAMPLEMODEL} --source_mask ${REGISTRATIONBRAINMASK} --target_mask ${REGISTRATIONBRAINMASK} --clobber $output.mnc
     """
 }
 
