@@ -79,7 +79,7 @@ In order to resolve these issues, scans need to be properly converted into MINC,
 If you are running default pipeline there are three files of interest for an input file `<basename>.(nii.gz,nii,mnc)`
 - `<basename>.convert.n4correct.cutneckapplyautocrop.mnc` -- the final T1 in native space, with skull, extra data and background removed, with bias field corrected
 - `<basename>.convert.n4correct.cutneckapplyautocrop.beastmask.mnc` -- the brain mask in native space
-- `<basename>.convert.n4correct.cutneckapplyautocrop.beastmask.mnc` -- the extracted T1 in native space, with bias field corrected
+- `<basename>.convert.n4correct.cutneckapplyautocrop.beastextract.mnc` -- the extracted T1 in native space, with bias field corrected
 
 # Niagara Operation
 
