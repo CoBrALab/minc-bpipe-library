@@ -97,7 +97,7 @@ n4correct = {
     //http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5445030
     uses(GB:6,threads:4) {
     exec """
-      iterativeN4_multispectral.sh $output.mnc $input.mnc
+      iterativeN4_multispectral.sh $input.mnc $output.mnc
     ""","n4correct"
     }
     branch.nativemnc = "${branch.nativemnc}.n4correct"
