@@ -91,7 +91,7 @@ Steps
 > git clone https://github.com/CobraLab/minc-bpipe-library.git
 > rm minc-bpipe-library/bpipe.config
 > mkdir bpipe-outputs && cd bpipe-outputs
-> module load intel/2018.2 openblas/0.2.20 gsl/2.4 minc-toolkit/1.9.16 minc-toolkit-extras/1.9.16 gnu-parallel qbatch java bpipe ANTs/20180814
+> module load cobralab
 > ../minc-bpipe-library/bpipe-batch.sh ../minc-bpipe-library/pipeline.bpipe /path/to/my/inputs/*.mnc > joblist #to generate a joblist
 > qbatch -N myjobname --chunksize 1 --walltime=8:00:00 joblist #to submit jobs to Niagara queing system
 ```
