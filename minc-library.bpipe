@@ -185,6 +185,7 @@ linear_antsRegistration = {
       antsRegistration --dimensionality 3 --verbose --minc \
         --output [\$tmpdir/reg] \
         --use-histogram-matching 1 \
+--initial-moving-transform [ ${REGISTRATIONMODEL},$input.mnc,1 ] \
 --transform Translation[ 0.1 ] \
         --metric Mattes[ ${REGISTRATIONMODEL},$input.mnc,1,32,None ] \
         --convergence [ 500x500x500x500x500x500x500x500,1e-6,10 ] \
