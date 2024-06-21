@@ -1,3 +1,7 @@
+# DEPRECATED
+
+Please see https://github.com/cobralab/iterativeN3 instead for a human T1 preprocessing pipeline
+
 # Library of bpipe functions for processing minc files
 
 `minc-bpipe-library` provides a set of chainable minc file processing functions to (pre)process data. At the moment is our star preprocessing pipeline. By default it will perform: N4correction, Cutneck, Head and Brain masks (using BEAST) and registration to MNI space using bestlinreg.
