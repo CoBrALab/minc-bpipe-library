@@ -1,6 +1,6 @@
 # DEPRECATED
 
-Please see https://github.com/cobralab/iterativeN3 instead for a human T1 preprocessing pipeline
+Please see https://github.com/CoBrALab/synthstrip_N3 instead for a human T1 preprocessing pipeline
 
 # Library of bpipe functions for processing minc files
 
